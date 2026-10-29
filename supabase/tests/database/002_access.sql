@@ -71,7 +71,7 @@ select access_test.ok((select count(*)=1 from private.access_tokens where access
 -- Move quotas near their limit without relying on slow repeated requests.
 insert into private.rate_limits(key_hash,operation,window_start,request_count,expires_at)
  values(decode(repeat('8',64),'hex'),'access',date_trunc('minute',clock_timestamp()),30,date_trunc('minute',clock_timestamp())+interval '1 minute')
- on conflict(key_hash,operation,window_start) do update set request_count=30;
+ on conflict(key_hash,operation,scope,window_seconds,window_start) do update set request_count=30;
 set local role service_role;
 select access_test.ok(public.server_access('validate_access',repeat('8',64))->>'status'='429','per-token limit applies before credential lookup');
 reset role;

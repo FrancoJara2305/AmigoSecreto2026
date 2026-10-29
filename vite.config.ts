@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { readPublicConfig } from './src/services/public-config.ts';
 
 export default defineConfig(({ mode }) => {
@@ -13,5 +14,12 @@ export default defineConfig(({ mode }) => {
   }
   // APP_URL can follow the browser origin at runtime; use an inert local origin for build validation.
   if (Object.keys(env).length > 0) readPublicConfig({ ...env, VITE_APP_URL: env.VITE_APP_URL || 'http://localhost:5173' });
-  return { plugins: [react()] };
+  return {
+    plugins: [react(), tailwindcss()],
+    // Independent previews use different public destinations. Sharing optimizer caches can
+    // trigger a reload, which correctly erases the capability kept only in memory.
+    cacheDir: process.env.APP_LOCAL_PREVIEW === '1' ? 'node_modules/.vite-preview' :
+      process.env.APP_LOCAL_MEDIA_TEST === '1' ? 'node_modules/.vite-media-test' : 'node_modules/.vite',
+    optimizeDeps: { include: ['react','react/jsx-runtime','react-dom','react-dom/client','react-router','lucide-react','@supabase/supabase-js'] },
+  };
 });

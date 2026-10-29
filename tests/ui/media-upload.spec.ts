@@ -1,0 +1,73 @@
+import { test,expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { mkdir } from 'node:fs/promises';
+import { editorFixture,openEditor,sampleGift,fixtureOwner } from './fixtures/gift-editor';
+const png=new URL('../fixtures/images/small.png',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1');
+test('file stays pending until save; preview, MIME, scoped path and successful association',async({page},testInfo)=>{
+  const state=await editorFixture(page); await openEditor(page);
+  await page.getByLabel('Título del regalo').fill('Una imagen propia');
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByAltText('Vista previa del regalo')).toBeVisible();
+  expect(state.uploads).toEqual(['image/png']); expect(state.gifts).toHaveLength(0);
+  await page.getByRole('button',{name:'Guardar regalo',exact:true}).click();
+  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();
+  expect(state.gifts[0].image_path).toMatch(new RegExp(`^${fixtureOwner}/gift/`)); expect(state.gifts[0].image_url).toBeNull();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.getByRole('heading',{name:'Tu opción 1',exact:true}).focus(); await page.evaluate(()=>window.scrollTo(0,0));
+  await mkdir('artifacts/ui',{recursive:true}); await page.screenshot({path:`artifacts/ui/media-${testInfo.project.name}.png`,fullPage:true});
+  await page.setViewportSize({width:320,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+test('invalid files never upload; failed replacement keeps previous source and draft',async({page})=>{
+  const gift={...sampleGift(),image_url:'https://example.com/old.webp'};
+  const state=await editorFixture(page,[gift]); await openEditor(page);
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles({name:'fake.png',mimeType:'image/png',buffer:Buffer.from('<svg>fake</svg>')});
+  await expect(page.getByRole('alert').filter({hasText:'Elige una imagen'})).toBeVisible(); expect(state.uploads).toHaveLength(0);
+  state.uploadFault=503;
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByRole('alert').filter({hasText:'La imagen anterior se conserva'})).toBeVisible();
+  await expect(page.getByLabel('URL de la imagen')).toHaveValue(gift.image_url);
+  await page.getByRole('button',{name:'Guardar regalo',exact:true}).click();
+  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();
+  expect(state.gifts[0].image_url).toBe(gift.image_url);
+});
+test('save waits for upload; cancelled navigation preserves draft and pending image can be removed',async({page})=>{
+  const state=await editorFixture(page); state.uploadDelay=1500; await openEditor(page);
+  await page.getByLabel('Título del regalo').fill('Imagen pendiente');
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByRole('status').filter({hasText:'subiendo imagen'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Guardando…',exact:true})).toBeDisabled(); expect(state.writes).toHaveLength(0);
+  await expect(page.getByAltText('Vista previa del regalo')).toBeVisible();
+  await page.getByRole('link',{name:'Cancelar',exact:true}).click();
+  await expect(page.getByRole('dialog')).toBeVisible(); await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+  await page.getByRole('button',{name:'Quitar imagen',exact:true}).click();
+  await page.getByRole('button',{name:'Guardar regalo',exact:true}).click();
+  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible(); expect(state.gifts[0].image_path).toBeNull();
+});
+test('revoked upload closes access and retains unsaved text without an automatic save',async({page})=>{
+  const state=await editorFixture(page); state.uploadFault=401; await openEditor(page);
+  await page.getByLabel('Título del regalo').fill('Mi borrador');
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByRole('alert').filter({hasText:'Tu acceso ya no permite'})).toBeVisible();
+  await expect(page.getByLabel('Título del regalo')).toHaveValue('Mi borrador');
+  await expect(page.getByRole('button',{name:'Guardar regalo',exact:true})).toBeDisabled(); expect(state.writes).toHaveLength(0);
+});
+test('hourly upload quota respects Retry-After, preserves text and still permits saving without the pending file',async({page})=>{
+  const state=await editorFixture(page); state.uploadFault=429; state.uploadRetryAfter='2400'; await openEditor(page);
+  await page.getByLabel('Título del regalo').fill('Una idea que se conserva');
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByRole('alert').filter({hasText:'límite de imágenes'})).toContainText('40 minuto(s)');
+  await expect(page.getByLabel('Subir imagen',{exact:true})).toBeDisabled();
+  await expect(page.getByLabel('Título del regalo')).toHaveValue('Una idea que se conserva'); expect(state.uploads).toHaveLength(1);
+  await page.getByRole('button',{name:'Guardar regalo',exact:true}).click();
+  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();
+  expect(state.gifts[0].image_path).toBeNull(); expect(state.uploads).toHaveLength(1);
+});
+test('upload cooldown enables explicit retry without automatically sending another file',async({page})=>{
+  const state=await editorFixture(page); state.uploadFault=429; state.uploadRetryAfter='1'; await openEditor(page);
+  await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByLabel('Subir imagen',{exact:true})).toBeDisabled();
+  await expect(page.getByLabel('Subir imagen',{exact:true})).toBeEnabled(); expect(state.uploads).toHaveLength(1);
+  state.uploadFault=0; await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByAltText('Vista previa del regalo')).toBeVisible(); expect(state.uploads).toHaveLength(2);
+});

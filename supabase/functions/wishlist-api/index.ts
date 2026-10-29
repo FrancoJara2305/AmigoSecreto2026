@@ -1,18 +1,17 @@
 import { createAccessHandler } from '../_shared/access-handler.ts';
+import { withRateLimit } from '../_shared/rate-limit.ts';
+import { createServerRpc } from '../_shared/server-rpc.ts';
+
+const serverRpc=createServerRpc(Deno.env.get('SUPABASE_URL'),Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+const allowedOrigins=(Deno.env.get('APP_ALLOWED_ORIGINS') ?? '').split(',').map((s)=>s.trim()).filter(Boolean);
 
 const handler = createAccessHandler({
-  allowedOrigins: (Deno.env.get('APP_ALLOWED_ORIGINS') ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+  allowedOrigins,
   appBaseUrl: Deno.env.get('APP_BASE_URL') ?? '',
-  async callRpc(args) {
-    const base = Deno.env.get('SUPABASE_URL');
-    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!base || !key) throw new Error('Server configuration unavailable');
-    const response = await fetch(`${base}/rest/v1/rpc/server_access`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` },
-      body: JSON.stringify(args), signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) throw new Error('Server operation unavailable');
-    return await response.json();
-  },
+  callRpc: (args) => serverRpc('server_access', args),
+  callMutationRpc: (args) => serverRpc('server_mutate', args),
 });
-Deno.serve(handler);
+Deno.serve(withRateLimit(handler,{allowedOrigins,endpoint:'wishlist-api',
+  callRpc:(args)=>serverRpc('server_rate_limit',args),ipSource:Deno.env.get('RATE_LIMIT_IP_SOURCE') ?? 'off',
+  hmacSecret:Deno.env.get('RATE_LIMIT_HMAC_SECRET'),log:(entry)=>console.log(JSON.stringify(entry)),
+}));

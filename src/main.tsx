@@ -1,12 +1,21 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ToastProvider } from './components/ui/ToastNotifications';
+import { App } from './app/App';
+import { initializePrivateAccess } from './app/private-access-bootstrap';
+import { PrivateAccessProvider } from './app/PrivateAccessProvider';
+import './styles/tokens.css';
+import './styles/components.css';
+import './styles/preview.css';
+import './styles/catalogue.css';
+import './styles/profile.css';
+import './styles/private-access.css';
+import './styles/gift-editor.css';
 
-// Integration scaffold only. No remote reads or writes, including on mount.
+// Capture credentials before rendering. Private mutations are authorized by the server.
+initializePrivateAccess();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <main>
-      <h1>Amigo Secreto 2026</h1>
-      <p>La integración local está preparada. El catálogo se implementará en una siguiente iteración.</p>
-    </main>
+    <PrivateAccessProvider><ToastProvider><App /></ToastProvider></PrivateAccessProvider>
   </StrictMode>,
 );

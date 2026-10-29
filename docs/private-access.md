@@ -1,6 +1,6 @@
 # T07 — Enlaces privados sin cuentas
 
-Implementado y verificado únicamente en Supabase local. No se desplegaron cambios remotos ni se crearon usuarios de Supabase Auth. La interfaz para abrir/administrar los enlaces corresponde a T12/T20; los mecanismos de servidor ya funcionan.
+El backend de T07 se implementó y verificó únicamente en Supabase local. No se desplegaron cambios remotos ni se crearon usuarios de Supabase Auth. T12 ya implementa la [apertura y navegación privada](private-navigation.md); la gestión visual de enlaces sigue en T20.
 
 ## Qué está disponible
 
@@ -48,11 +48,11 @@ npm run organizer:bootstrap -- --recover
 
 Opcional: `--app-url http://localhost:5174` cambia el origen del enlace generado; no cambia la base de datos de destino. No se admiten credenciales ni una URL PostgreSQL. Los tokens no se pasan como argumentos a comandos.
 
-Las rutas `/acceso` y `/organizador/acceso` aún no tienen pantalla funcional. Abrir el enlace en React no administra todavía la lista: T12 conectará la captura del fragmento y la memoria de la pestaña. Crear el enlace ahora prepara el acceso, pero no implementa el catálogo ni el panel.
+Las rutas `/acceso` y `/organizador/acceso` ya capturan el fragmento antes del render, limpian la URL y validan el acceso por API. El participante entra a su perfil y el organizador a una pantalla protegida preparatoria. Las acciones de edición navegan a destinos protegidos; los formularios y el panel completo se implementarán en sus bloques T13/T18/T20.
 
 ## Contrato de la API de acceso
 
-POST JSON, `Content-Type: application/json`, token original en `X-Edit-Token`. No ponerlo en query string, Authorization ni cuerpos registrados. Los fragmentos de enlaces no llegan al servidor HTTP. La aplicación cliente deberá extraerlos, limpiar la URL y conservarlos solo en memoria cuando se implemente T12.
+POST JSON, `Content-Type: application/json`, token original en `X-Edit-Token`. No ponerlo en query string, Authorization ni cuerpos registrados. Los fragmentos de enlaces no llegan al servidor HTTP. T12 ya los extrae y limpia; conserva la credencial en una clausura de memoria, sin incluirla en el estado React ni almacenamientos del navegador.
 
 | `action` | Campos adicionales | Permiso | Resultado |
 | --- | --- | --- | --- |
@@ -111,3 +111,5 @@ El contrato SQL usa transacciones con ROLLBACK, incluyendo una recuperación tem
 Resultados de T07: 127 aserciones SQL; generación, canonicalización, hashing, respuestas, CORS, validaciones y secretos verificados por pruebas Node; bootstrap/reemplazo/expiración/rotación/recuperación probados en la base local; concurrencia entre sesiones e integración HTTP real en Edge Runtime. Lint y asesores de seguridad locales sin problemas reportados.
 
 No se ejecutó el bootstrap persistente para el usuario: el enlace inicial debe generarse manualmente en su terminal para que no aparezca en el historial de herramientas de esta conversación. Las pruebas verificaron el bootstrap dentro de transacciones revertidas. El siguiente bloque es T08, mutaciones protegidas de perfil y regalos.
+
+Actualización de T08: el backend de mutaciones ya está implementado. La misma función acepta ahora `update_profile`, `create_gift`, `update_gift` y `delete_gift`, con validación de la credencial dentro de su transacción. Las referencias anteriores a CRUD pendiente describen el estado al cerrar T07. Consulta el [contrato actual de edición](protected-mutations.md). Importación, uploads y pantallas siguen pendientes.

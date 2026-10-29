@@ -140,12 +140,12 @@ select test_helpers.ok((select count(*) = 1 from private.access_tokens where par
 insert into private.media_assets(participant_id,storage_path,mime_type,size_bytes,created_by_token_id) values
  ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001/avatar/40000000-0000-0000-0000-000000000001.webp','image/webp',1000,'30000000-0000-0000-0000-000000000001');
 update public.participants set photo_path = '10000000-0000-0000-0000-000000000001/avatar/40000000-0000-0000-0000-000000000001.webp' where slug = 'test-ana';
-select test_helpers.throws($q$update public.participants set photo_path = '10000000-0000-0000-0000-000000000001/avatar/40000000-0000-0000-0000-000000000001.webp' where slug = 'test-bruno'$q$,'23503','cannot attach another person photo');
+select test_helpers.throws($q$update public.participants set photo_path = '10000000-0000-0000-0000-000000000001/avatar/40000000-0000-0000-0000-000000000001.webp' where slug = 'test-bruno'$q$,'42501','cannot attach another person photo');
 select test_helpers.throws($q$update public.participants set photo_url = 'https://example.com/picture.jpg' where slug = 'test-ana'$q$,'23514','only one photo source');
 select test_helpers.throws($q$delete from private.media_assets$q$,'23503','referenced image cannot be deleted');
 select test_helpers.throws($q$insert into public.gifts(participant_id,position,title,gift_type,image_path)
  values ('10000000-0000-0000-0000-000000000002',1,'Ajeno','object','10000000-0000-0000-0000-000000000001/avatar/40000000-0000-0000-0000-000000000001.webp')$q$,
- '23503','cannot attach another person gift image');
+ '42501','cannot attach another person gift image');
 select test_helpers.throws($q$update private.media_assets set mime_type = 'image/svg+xml'$q$,'23514','media MIME allowlist');
 select test_helpers.throws($q$update private.media_assets set size_bytes = 3145729$q$,'23514','media size limit');
 select test_helpers.throws($q$update private.media_assets set storage_path = '../escape.webp'$q$,'23514','media path bounded to participant');

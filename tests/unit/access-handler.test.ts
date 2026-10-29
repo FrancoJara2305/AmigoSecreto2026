@@ -55,6 +55,7 @@ test('rate limits, network failures and unconfigured origins fail closed without
   const response = await handler(request({ action: 'validate_access' }));
   assert.equal(response.status, 429);
   assert.equal(response.headers.get('retry-after'), '12');
+  assert.equal(response.headers.get('access-control-expose-headers'), 'Retry-After');
   const failed = createAccessHandler({ allowedOrigins: [origin], appBaseUrl: origin,
     async callRpc() { throw new Error(`sensitive ${token}`); } });
   const error = await failed(request({ action: 'validate_access' }));

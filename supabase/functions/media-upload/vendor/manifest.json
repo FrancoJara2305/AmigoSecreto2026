@@ -1,0 +1,32 @@
+{
+  "jpeg": {
+    "version": "1.6.0",
+    "files": {
+      "LICENSE": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "codec/LICENSE.codec.md": "8213556ea36ce3a0f2883db06238463e2452fdad68e3d2e2e4ace2189477a37e",
+      "codec/dec/mozjpeg_dec.js": "a6836b2d03d4fdda64b4aef380e6298d7421c070e7e1e4cf13ec129df7aa0b5e",
+      "codec/dec/mozjpeg_dec.wasm": "a7c4b12169817e779ff4af137981393ae924944e167ad1bd95747c9199162d3e"
+    }
+  },
+  "png": {
+    "version": "3.1.1",
+    "files": {
+      "LICENSE": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "codec/LICENSE.codec.md": "e293d1dddc9785200b1f58a4f5293543cf8566d9e0b8a3c02fad955035b19f42",
+      "codec/pkg/squoosh_png.js": "e072d369a15b3c57141206b33911d41ea18e7d4a20be93cff9d3611891754579",
+      "codec/pkg/squoosh_png_bg.wasm": "263d6e658808a74b72a1a99c5cc1d619237e70c150db6e41d5d84d3d117ab9be"
+    }
+  },
+  "webp": {
+    "version": "1.5.0",
+    "files": {
+      "LICENSE": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "codec/LICENSE.codec.md": "e293d1dddc9785200b1f58a4f5293543cf8566d9e0b8a3c02fad955035b19f42",
+      "meta.js": "3d70163a00e6264fc5a8fa7c8f3b1fa21a50a00d910f4d2de3ef1bbd2fdc98ab",
+      "codec/dec/webp_dec.js": "c57971611f4d9ec04e4636ce7bb4a35c031b24cbdb013518f0a017d9f6014370",
+      "codec/dec/webp_dec.wasm": "30fb52fa2a80166d25ba7debf902218904ba1f05ccce9f959f722beff9e2f344",
+      "codec/enc/webp_enc.js": "5fd62301662e37785aec38e38807926f72933d4c8b919018a43faf1b1ca760f6",
+      "codec/enc/webp_enc.wasm": "b6085bb6702f144e9dc6016d58d230b34a84976bf0d080b7390b4b4b137d6ab7"
+    }
+  }
+}

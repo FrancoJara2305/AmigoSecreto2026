@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../domain/database.types';
-import { readPublicConfig } from './public-config';
+import { readPublicConfig } from './public-config.ts';
 
 let publicClient: SupabaseClient<Database> | undefined;
 

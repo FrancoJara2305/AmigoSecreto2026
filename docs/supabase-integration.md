@@ -6,12 +6,12 @@ Estado de esta iteración: preparación local, sin vinculación ni operaciones s
 
 Al comenzar había README, `implementation_plan.md`, `package.json`, lockfile y `supabase-js`/`supabase/ssr`; no había React/Vite, migraciones, configuración CLI ni funciones. `.env` y `.env.local` existían sin exclusión de Git y se conservaron. Se añadió `.gitignore` antes de trabajar con la integración.
 
-La preparación inicial cubrió la base de T02–T05. Las iteraciones posteriores completaron T06 (demo local) y T07 (ciclo de enlaces privados). No equivale a completar el MVP ni las mutaciones T08. Se mantiene el plan como documento original y se registran aquí las decisiones actuales:
+La preparación inicial cubrió la base de T02–T05. Las iteraciones posteriores completaron T06 (demo local), T07 (enlaces privados) y T08 (edición protegida). El MVP visual sigue pendiente. Se mantiene el plan como documento original y se registran aquí las decisiones actuales:
 
-- React/Vite tiene solo una entrada mínima para compilar. No ejecuta consultas al montar ni implementa las pantallas del catálogo.
+- Desde T10, React/Vite tiene bienvenida y catálogo con dos consultas públicas al montar. La galería de T09 se conserva en `/diseno`. `npm run preview:local` permite revisar el grupo en memoria sin usar el destino de `.env.local`; ver [catálogo](catalogue.md).
 - `src/services/supabase.ts` crea el cliente público de forma diferida, sin sesiones de Auth, renovación ni detección de tokens en URL. `public-data.ts` contiene consultas de lectura, sin ejecutarlas automáticamente.
 - Las tablas públicas usan grants explícitos y RLS de lectura; las privadas no se exponen por Data API. La RPC `server_access` solo admite service_role; visitantes no pueden ejecutarla ni modificar tablas.
-- T07 habilita wishlist-api local únicamente para validar/gestionar enlaces privados con autorización propia. Las funciones de importación y upload siguen deshabilitadas; el CRUD de datos sigue pendiente de T08. Ver [guía T07](private-access.md).
+- wishlist-api local permite validar/gestionar enlaces privados y editar perfil/regalos con autorización propia dentro de transacciones. Importación y upload siguen deshabilitadas. Ver [T07](private-access.md) y [T08](protected-mutations.md).
 - La preparación inicial no incluyó participantes. En T06 se añadió `supabase/seed.sql` con 11 participantes ficticios y 18 regalos, cargados exclusivamente mediante `npm run seed:local`. El contrato de permisos usa otras dos identidades temporales, siempre con ROLLBACK, y también funciona con la demo presente.
 - Presupuesto sigue reservado en el modelo, sin configuración de UI. No se añade sorteo ni cuentas.
 
@@ -112,9 +112,9 @@ Después de pasar SQL, verificar manualmente en local:
 
 - Con la clave pública, GET de participants/gifts/settings funciona; INSERT/UPDATE/DELETE/TRUNCATE y acceso al esquema privado fallan.
 - A través de Storage API, un objeto cargado con credenciales de **servidor local** puede descargarse mediante su URL pública. El público no puede listar, subir, reemplazar, mover ni borrar objetos de `wishlist-media`.
-- El bucket exige 3 MiB y MIME permitido. Esto no verifica bytes reales: esa protección se implementará en `media-upload` antes de habilitarlo.
+- El bucket exige 3 MiB y MIME permitido. T14 añade la comprobación real de bytes, dimensiones y decodificación en `media-upload`, antes de subir el objeto.
 - Una imagen de prueba se crea/elimina por Storage API, nunca mediante borrado de filas `storage.objects`. Las migraciones gestionan únicamente la configuración declarativa del bucket y sus políticas. Referencias: [control de acceso](https://supabase.com/docs/guides/storage/security/access-control) y [esquema de Storage](https://supabase.com/docs/guides/storage/schema/design).
-- wishlist-api solo admite las cuatro acciones de acceso documentadas en T07. El CRUD no está habilitado. Las funciones de importación/upload siguen rechazando toda operación y no deben desplegarse.
+- wishlist-api admite las acciones documentadas de T07 y T08. Se pueden repetir las pruebas de CRUD con `npm run test:mutations:http` y las carreras con `npm run test:mutations:concurrency`. T14 habilitó uploads autorizados y T16 preparó importación segura con transporte firmado; consultar sus actualizaciones al final. No desplegar en esta iteración.
 
 ## Vincular tu instancia: solo manualmente después de revisión
 
@@ -142,3 +142,16 @@ No ejecutar `db reset` sobre remoto, no añadir `--include-seed`, no ejecutar fi
 ## Comprobaciones y límites de la entrega
 
 Los resultados concretos se registran en `docs/validation-results.md`. Pasar los tests embebidos no certifica todavía compatibilidad con la pila alojada, Storage HTTP, revocación de enlaces o seguridad del futuro scraping. Esos controles deberán pasar antes de habilitar escritura o publicar el MVP.
+## Actualización T14
+
+Las migraciones `20261027214226_protected_media_lifecycle.sql` y `20261027215115_media_cleanup_compatibility.sql` están validadas y aplicadas únicamente en local. Preparan reservas de imágenes, guardas de asociación y reclamaciones privadas de limpieza. `media-upload` se habilita para servir en local y valida enlaces privados; no usa Supabase Auth. El mantenimiento no tiene endpoint de navegador. Consulta [operación y pruebas de T14](media-upload.md). Se mantiene la revisión y aprobación antes de cualquier operación remota.
+
+## Actualización T15
+
+Se añadieron y probaron solo en local `20261029035631_atomic_rate_limits.sql` y `20261029040501_quota_retry_and_saturation.sql`: cuotas compartidas, ventanas de minuto/hora, barrera HTTP y mantenimiento acotado. El modo predeterminado ignora todas las cabeceras IP no verificadas y conserva el límite global. No se cambió `.env.local` ni se habilitó la importación. Ver [archivos, resultados y comandos de T15](rate-limits.md). La instancia alojada sigue pendiente de revisión y aprobación antes de cualquier operación remota.
+
+## Actualización T16
+
+Se aplicó únicamente en local `20261029043751_protected_product_import.sql`: reservas privadas de importación y RPC restringidas al servidor para preparar/consumir una solicitud con autorización, cuotas, vencimiento y protección frente a replay. `product-metadata` queda habilitada para servir localmente, con configuración predeterminada que falla cerrada. No guarda regalos.
+
+El sondeo de Edge verificó las limitaciones de sus clientes HTTP para fijar DNS manteniendo TLS del dominio. Se activó la alternativa Node prevista en el plan: `api/fetch-product.ts`, único adaptador descargador, sin claves de base de datos ni credenciales de participantes. Firma solicitudes/respuestas y exige consumo atómico por callback antes de conectar. Solo se verificó su implementación en Node local; no se desplegó en Vercel ni se probaron tiendas en vivo. Ver [decisión, límites, pruebas y comandos locales de T16](product-import.md). La interfaz permanece en T17 y la aprobación previa a cualquier operación remota sigue vigente.

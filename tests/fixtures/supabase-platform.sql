@@ -12,7 +12,8 @@ create table storage.buckets (
 );
 create table storage.objects (
   id uuid primary key default gen_random_uuid(),
-  bucket_id text references storage.buckets(id), name text not null
+  bucket_id text references storage.buckets(id), name text not null,
+  created_at timestamptz not null default clock_timestamp()
 );
 alter table storage.buckets enable row level security;
 alter table storage.objects enable row level security;

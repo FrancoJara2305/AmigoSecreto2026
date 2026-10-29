@@ -57,19 +57,20 @@ enabled = false
 [edge_runtime]
 enabled = true
 
-# Only wishlist-api handles T07 actions; it validates private capabilities itself.
-# Importing products, uploads and application mutations remain unavailable.
+# wishlist-api handles T07 access and T08 mutations, validating capabilities in SQL.
+# Each enabled endpoint validates capabilities or signed one-use server transport claims.
 [functions.wishlist-api]
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/wishlist-api/index.ts"
 
 [functions.product-metadata]
-enabled = false
-verify_jwt = true
+enabled = true
+verify_jwt = false
 entrypoint = "./functions/product-metadata/index.ts"
 
 [functions.media-upload]
-enabled = false
-verify_jwt = true
+enabled = true
+verify_jwt = false
 entrypoint = "./functions/media-upload/index.ts"
+static_files = ["./functions/media-upload/vendor/**/*.wasm"]

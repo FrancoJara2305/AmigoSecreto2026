@@ -47,13 +47,18 @@ export type EventSettings = {
   updated_at: string;
 };
 
-type ReadOnlyTable<Row> = { Row: Row; Insert: never; Update: never; Relationships: [] };
+type ReadOnlyTable<Row, Relationships extends { foreignKeyName: string; columns: string[]; referencedRelation: string; referencedColumns: string[] }[] = []> = {
+  Row: Row; Insert: never; Update: never; Relationships: Relationships;
+};
 
 export interface Database {
   public: {
     Tables: {
       participants: ReadOnlyTable<Participant>;
-      gifts: ReadOnlyTable<Gift>;
+      gifts: ReadOnlyTable<Gift, [{
+        foreignKeyName: 'gifts_participant_id_fkey'; columns: ['participant_id'];
+        referencedRelation: 'participants'; referencedColumns: ['id'];
+      }]>;
       event_settings: ReadOnlyTable<EventSettings>;
     };
     Views: Record<never, never>;

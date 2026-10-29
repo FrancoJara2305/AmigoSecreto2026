@@ -10,3 +10,6 @@ supabase/.branches/
 .supabase/
 *.log
 .DS_Store
+playwright-report/
+test-results/
+artifacts/
