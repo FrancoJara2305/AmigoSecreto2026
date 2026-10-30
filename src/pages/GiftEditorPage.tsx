@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { AppLink as Link } from '../components/ui/AppLink';
+import { useParams } from 'react-router';
 import type { Gift } from '../domain/database.types';
 import { usePrivateAccess } from '../app/PrivateAccessProvider';
 import { usePublicProfile } from '../hooks/usePublicProfile';

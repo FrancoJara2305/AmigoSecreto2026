@@ -12,7 +12,7 @@ export function Button({ variant = 'primary', icon, loading = false, disabled, c
   </button>;
 }
 export function LinkButton({ variant = 'primary', icon, className = '', children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & VisualProps) {
-  return <a {...props} className={`button button--${variant} ${className}`}>
+  return <a tabIndex={0} {...props} className={`button button--${variant} ${className}`}>
     {icon ? <span aria-hidden="true">{icon}</span> : null}{children}
   </a>;
 }

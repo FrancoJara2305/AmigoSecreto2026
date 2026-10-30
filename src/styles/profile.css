@@ -54,7 +54,10 @@
 .profile-preferences h2 { font: 400 1.85rem/1.3 var(--font-display); letter-spacing: -.02em; }
 .profile-preferences h2 + p { margin-top: .8rem; color: var(--muted); font-size: .9rem; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 80ch; }
 .profile-state { min-height: 48vh; padding-block: 1.5rem 3rem; display: flex; flex-direction: column; align-items: start; gap: 1.25rem; }
-.profile-state h1 { font: 400 2.25rem/1.25 var(--font-display); }
+/* Keep the footer below the viewport until the async profile fills the page. */
+.profile-state--loading { min-height: 100svh; }
+.profile-state > * { min-width: 0; max-width: 100%; }
+.profile-state h1 { font: 400 2.25rem/1.25 var(--font-display); overflow-wrap: anywhere; }
 .profile-state > p { color: var(--muted); max-width: 48ch; }
 .profile-state .loading-state { width: min(440px, 100%); }
 .profile-state__symbol { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--color-cream); }

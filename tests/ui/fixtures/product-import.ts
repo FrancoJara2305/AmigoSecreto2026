@@ -1,3 +1,4 @@
+import { uiOrigin } from './origins';
 import { expect,type Page } from '@playwright/test';
 import { api,fixtureCredential,fixtureOwner } from './gift-editor';
 import type { ImportMetadata } from '../../../src/domain/product-import';
@@ -8,7 +9,7 @@ export function sampleMetadata():ImportMetadata {
 export async function importFixture(page:Page) {
   const state={metadata:sampleMetadata(),requests:[] as Record<string,unknown>[],status:200,manual:'',delay:0,retryAfter:'1',networkFailure:false};
   await page.route(`${api}/functions/v1/product-metadata`,async(route)=>{
-    const cors={'Access-Control-Allow-Origin':'http://127.0.0.1:4173','Access-Control-Expose-Headers':'Retry-After','Cache-Control':'no-store'};
+    const cors={'Access-Control-Allow-Origin':uiOrigin,'Access-Control-Expose-Headers':'Retry-After','Cache-Control':'no-store'};
     if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:{...cors,'Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'content-type,apikey,x-edit-token'}});
     const body=route.request().postDataJSON();state.requests.push(body);
     expect(route.request().headers()['x-edit-token']).toBe(fixtureCredential);expect(body).toEqual({participant_id:fixtureOwner,url:'https://shop.example.com/product'});

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { AppLink as Link } from '../ui/AppLink';
 import { ArrowLeft, Link2Off, RotateCcw } from 'lucide-react';
 import type { AccessState } from '../../services/private-session';
 import { Button } from '../ui/Button';

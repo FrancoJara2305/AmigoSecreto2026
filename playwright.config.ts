@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { uiPort,uiOrigin } from './tests/ui/fixtures/origins';
 
 export default defineConfig({
   testDir: './tests/ui',
@@ -7,7 +8,7 @@ export default defineConfig({
   retries: 0,
   reporter: 'list',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: uiOrigin,
     browserName: 'chromium',
     channel: process.env.PLAYWRIGHT_CHANNEL ?? 'msedge',
     locale: 'es-PE',
@@ -20,9 +21,9 @@ export default defineConfig({
     { name: 'mobile', use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
   ],
   webServer: {
-    command: 'npm run preview:local -- --port 4173',
+    command: `npm run preview:local -- --port ${uiPort}`,
     env: { APP_LOCAL_UI_TEST: '1' },
-    url: 'http://127.0.0.1:4173',
+    url: uiOrigin,
     // Never reuse a server that could load the user's remote .env.local destination.
     reuseExistingServer: false,
     timeout: 30000,

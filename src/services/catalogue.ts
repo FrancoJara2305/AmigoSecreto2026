@@ -1,9 +1,7 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../domain/database.types';
 import type { CatalogueData } from '../domain/catalogue';
-import { getPublicSupabase } from './supabase.ts';
+import { getPublicSupabase,type PublicDataClient } from './supabase.ts';
 
-export async function loadCatalogue(signal: AbortSignal, client: SupabaseClient<Database> = getPublicSupabase()): Promise<CatalogueData> {
+export async function loadCatalogue(signal: AbortSignal, client: PublicDataClient = getPublicSupabase()): Promise<CatalogueData> {
   const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(12000)]);
   // Two public requests regardless of the number of cards. No per-person gift request.
   const [people, event] = await Promise.all([

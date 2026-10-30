@@ -1,3 +1,4 @@
+import { apiOrigin,uiOrigin } from './fixtures/origins';
 import { mkdir } from 'node:fs/promises';
 import { test, expect, type Page, type Route } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -6,8 +7,8 @@ import AxeBuilder from '@axe-core/playwright';
 const credential = 'A'.repeat(43);
 const otherCredential = 'B'.repeat(42) + 'A';
 const owner = '11111111-1111-4111-8111-000000000001';
-const endpoint = 'http://127.0.0.1:4174/functions/v1/wishlist-api';
-const cors = { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173', 'Access-Control-Expose-Headers': 'Retry-After', 'Cache-Control': 'no-store' };
+const endpoint = `${apiOrigin}/functions/v1/wishlist-api`;
+const cors = { 'Access-Control-Allow-Origin': uiOrigin, 'Access-Control-Expose-Headers': 'Retry-After', 'Cache-Control': 'no-store' };
 const participant = { access: { token_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', access_type: 'participant', participant_id: owner, participant_slug: 'melyza', expires_at: null } };
 const organizer = { access: { ...participant.access, access_type: 'organizer', participant_id: null, participant_slug: null } };
 async function validate(page: Page, handler: (route: Route) => Promise<unknown> = (route) => route.fulfill({ json: participant, headers: cors })) {
@@ -33,7 +34,7 @@ test('private fragment is removed before verification, is sent only in a header 
   const leaked: string[] = [];
   page.on('request', (request) => { if (request.url().includes(credential) || request.postData()?.includes(credential)) leaked.push(request.url()); });
   await validate(page, async (route) => {
-    expect(page.url()).toBe('http://127.0.0.1:4173/acceso');
+    expect(page.url()).toBe(`${uiOrigin}/acceso`);
     expect(route.request().headers()['x-edit-token']).toBe(credential);
     expect(route.request().headers()['authorization']).toBeUndefined();
     expect(route.request().postDataJSON()).toEqual({ action: 'validate_access' });
@@ -54,7 +55,7 @@ test('reload and another tab do not inherit access, public copy excludes the cap
   await page.evaluate(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text: string) => { (window as Window & { copied?: string }).copied = text; } } }); });
   await page.getByRole('button', { name: 'Copiar perfil público' }).click();
   await expect(page.getByText('Enlace público copiado', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toBe('http://127.0.0.1:4173/participante/melyza');
+  expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toBe(`${uiOrigin}/participante/melyza`);
   const another = await page.context().newPage();
   await another.goto('/participante/melyza');
   await expect(another.getByRole('heading', { name: 'Melyza', exact: true })).toBeVisible();
@@ -182,12 +183,12 @@ test('protected destination reports missing data and can retry a public profile 
   await spa(page, '/participante/no-existe/editar');
   await expect(page.getByRole('heading', { name: 'No encontramos este participante' })).toBeFocused();
   let fail = true;
-  await page.route('http://127.0.0.1:4174/rest/v1/participants?**', (route) => {
+  await page.route(`${apiOrigin}/rest/v1/participants?**`, (route) => {
     if (fail && new URL(route.request().url()).searchParams.get('slug') === 'eq.melyza') return route.fulfill({ status: 403, json: { message: 'provider-detail' }, headers: cors });
     return route.continue();
   });
   await spa(page, '/participante/melyza/editar');
-  await expect(page.getByRole('heading', { name: 'No pudimos cargar el destino' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'No pudimos cargar el perfil' })).toBeFocused();
   fail = false; await page.getByRole('button', { name: 'Volver a intentar' }).click();
   await expect(page.getByRole('heading', { name: 'El perfil de Melyza' })).toBeFocused();
 });

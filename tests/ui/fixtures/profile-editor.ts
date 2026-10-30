@@ -1,9 +1,10 @@
+import { uiOrigin } from './origins';
 import { readFile } from 'node:fs/promises';
 import { expect,type Page } from '@playwright/test';
 import type { EditableProfile } from '../../../src/domain/profile-editor';
 import { editorFixture,fixtureOwner,fixtureCredential,api,sampleGift } from './gift-editor';
 export function sampleProfile():EditableProfile{return {id:fixtureOwner,name:'Melyza',slug:'melyza',version:1,photo_url:null,photo_path:null,avatar_key:'star',personal_message:null,general_preferences:null};}
-const cors={'Access-Control-Allow-Origin':'http://127.0.0.1:4173','Access-Control-Expose-Headers':'Retry-After','Cache-Control':'no-store'};
+const cors={'Access-Control-Allow-Origin':uiOrigin,'Access-Control-Expose-Headers':'Retry-After','Cache-Control':'no-store'};
 export async function profileEditorFixture(page:Page,initial=sampleProfile(),organizer=false){
   const gifts=await editorFixture(page,[{...sampleGift(),participant_id:initial.id}],organizer,initial.id);
   const state={profile:structuredClone(initial),writes:[] as Record<string,unknown>[],uploads:[] as string[],fault:'' as ''|'fields'|'lost'|'access'|'rate',field:'personal_message',retryAfter:'2',delay:0,uploadDelay:0,uploadFault:0,uploadRetryAfter:'2400',loadError:false,deniedAccess:false};

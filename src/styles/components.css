@@ -15,8 +15,8 @@
 .spinner { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.field { display: grid; gap: .45rem; align-content: start; min-width: 0; }
-.field__label { color: var(--ink); font-size: .875rem; font-weight: 600; }
+.field { display: grid; grid-template-columns:minmax(0,1fr); gap: .45rem; align-content: start; min-width: 0; }
+.field__label { color: var(--ink); font-size: .875rem; font-weight: 600; overflow-wrap:anywhere; }
 .field__required { margin-left: .2rem; color: var(--error); }
 .field__hint { color: var(--muted); font-size: .8rem; line-height: 1.5; }
 .field__control { width: 100%; min-width: 0; min-height: 48px; border: 1px solid var(--border); border-radius: var(--radius-control); padding: .75rem .9rem; background: var(--surface-raised); color: var(--ink); line-height: 1.5; transition: border-color var(--duration), box-shadow var(--duration); }
@@ -61,7 +61,8 @@ textarea.field__control { min-height: 108px; resize: vertical; }
 
 .confirm-dialog { width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; overflow-y: auto; padding: 0; border: 1px solid var(--border-soft); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #173e3238; }
 .confirm-dialog::backdrop { background: #112b246b; }
-.confirm-dialog__content { padding: 1.75rem; }
+.confirm-dialog__content { padding: clamp(16px,4vw,28px); }
+.confirm-dialog :is(h2,p) { overflow-wrap:anywhere; }
 .confirm-dialog__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .confirm-dialog__symbol { display: grid; width: 46px; height: 46px; place-items: center; color: var(--error); border-radius: 50%; background: #fae8e3; }
 .confirm-dialog__symbol svg { width: 22px; height: 22px; }

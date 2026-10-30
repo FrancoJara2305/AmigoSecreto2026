@@ -1,5 +1,5 @@
 import { ArrowDown } from 'lucide-react';
-import { Link } from 'react-router';
+import { AppLink as Link } from '../ui/AppLink';
 import type { CatalogueSettings } from '../../domain/catalogue';
 import { ChristmasGifts } from '../illustrations/ChristmasGifts';
 

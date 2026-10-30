@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router';
+import { AppLink as Link } from '../ui/AppLink';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import { usePrivateAccess } from '../../app/PrivateAccessProvider';
 import { scopeCanEdit } from '../../domain/private-access';

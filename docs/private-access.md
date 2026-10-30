@@ -1,6 +1,6 @@
 # T07 — Enlaces privados sin cuentas
 
-El backend de T07 se implementó y verificó únicamente en Supabase local. No se desplegaron cambios remotos ni se crearon usuarios de Supabase Auth. T12 ya implementa la [apertura y navegación privada](private-navigation.md); la gestión visual de enlaces sigue en T20.
+El backend de T07 se implementó y verificó únicamente en Supabase local. No se desplegaron cambios remotos ni se crearon usuarios de Supabase Auth. T12 implementa la [apertura y navegación privada](private-navigation.md); T20 incorpora la [gestión visual de enlaces](organizer-panel.md), incluida emisión, revocación, copia y rotación con relevo en memoria.
 
 ## Qué está disponible
 
@@ -48,7 +48,7 @@ npm run organizer:bootstrap -- --recover
 
 Opcional: `--app-url http://localhost:5174` cambia el origen del enlace generado; no cambia la base de datos de destino. No se admiten credenciales ni una URL PostgreSQL. Los tokens no se pasan como argumentos a comandos.
 
-Las rutas `/acceso` y `/organizador/acceso` ya capturan el fragmento antes del render, limpian la URL y validan el acceso por API. El participante entra a su perfil y el organizador a una pantalla protegida preparatoria. Las acciones de edición navegan a destinos protegidos; los formularios y el panel completo se implementarán en sus bloques T13/T18/T20.
+Las rutas `/acceso` y `/organizador/acceso` capturan el fragmento antes del render, limpian la URL y validan el acceso por API. El participante entra a su perfil y el organizador al panel. Los formularios de regalos/perfil y la gestión visual de participantes/evento/enlaces ya están implementados y probados localmente.
 
 ## Contrato de la API de acceso
 
@@ -63,7 +63,7 @@ POST JSON, `Content-Type: application/json`, token original en `X-Edit-Token`. N
 
 `expires_at` es ISO UTC, por ejemplo `2026-12-25T23:59:00Z`. La base rechaza fechas pasadas o infinitas; el handler rechaza formatos ambiguos y fechas inexistentes. Se ignoran las cookies como mecanismo de acceso y no se aceptan flags como `is_admin`. Los campos desconocidos se rechazan.
 
-No existen acciones HTTP de bootstrap/recuperación ni CRUD de participantes/regalos. Los endpoints de importación y upload continúan deshabilitados. Todas las respuestas de acceso usan `no-store`; no se registran cuerpos ni tokens.
+No existen acciones HTTP de bootstrap/recuperación. La misma función incluye las mutaciones y administración protegidas; importación y upload están habilitados localmente con autorización propia. El importador sin transporte/configuración falla cerrado. Las respuestas de acceso usan `no-store`; no se registran cuerpos ni tokens.
 
 ## Separación de permisos
 
@@ -82,6 +82,8 @@ Referencias: [permisos de funciones](https://supabase.com/docs/guides/database/f
 ## Revocación, concurrencia y frecuencia
 
 Las operaciones de ciclo de vida se serializan con un advisory lock para este evento pequeño. El orden es cuota → bloqueo del ciclo de vida → credencial del actor → destino. No hay tablas de sesiones ni JWT propios.
+
+T19 refuerza este orden: emisión/revocación bloquean las credenciales del participante antes de su fila pública, como hacen las ediciones personales y las bajas. La credencial del actor se bloquea antes de autorizar una operación de ciclo de vida; se vuelve a comprobar después de esperar por el destino. Las pruebas con conexiones separadas cubren la edición parcialmente autorizada, vencimiento al revocar y vencimiento al rotar. El nuevo listado administrativo expone únicamente estado/vencimiento del enlace, nunca el token anterior. Ver [backend T19](organizer-backend.md); el panel permanece en T20.
 
 La prueba con conexiones separadas mantiene una transacción autorizada abierta, observa en `pg_stat_activity` que la revocación está esperando un lock, libera la transacción y comprueba que una validación posterior devuelve 401. Se verificó en PostgreSQL de Docker, no solo en PGlite.
 
@@ -112,4 +114,4 @@ Resultados de T07: 127 aserciones SQL; generación, canonicalización, hashing, 
 
 No se ejecutó el bootstrap persistente para el usuario: el enlace inicial debe generarse manualmente en su terminal para que no aparezca en el historial de herramientas de esta conversación. Las pruebas verificaron el bootstrap dentro de transacciones revertidas. El siguiente bloque es T08, mutaciones protegidas de perfil y regalos.
 
-Actualización de T08: el backend de mutaciones ya está implementado. La misma función acepta ahora `update_profile`, `create_gift`, `update_gift` y `delete_gift`, con validación de la credencial dentro de su transacción. Las referencias anteriores a CRUD pendiente describen el estado al cerrar T07. Consulta el [contrato actual de edición](protected-mutations.md). Importación, uploads y pantallas siguen pendientes.
+La función acepta `update_profile`, `create_gift`, `update_gift` y `delete_gift`, con validación de la credencial dentro de su transacción. Consulta el [contrato de edición](protected-mutations.md), [panel](organizer-panel.md) y [operación/recuperación](operations.md). Importación, uploads y pantallas están implementados; la publicación sigue pendiente de T25.

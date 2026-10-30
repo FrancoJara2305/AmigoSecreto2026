@@ -10,6 +10,7 @@ const handler = createAccessHandler({
   appBaseUrl: Deno.env.get('APP_BASE_URL') ?? '',
   callRpc: (args) => serverRpc('server_access', args),
   callMutationRpc: (args) => serverRpc('server_mutate', args),
+  callAdminRpc:(args)=>serverRpc('server_admin',args),
 });
 Deno.serve(withRateLimit(handler,{allowedOrigins,endpoint:'wishlist-api',
   callRpc:(args)=>serverRpc('server_rate_limit',args),ipSource:Deno.env.get('RATE_LIMIT_IP_SOURCE') ?? 'off',

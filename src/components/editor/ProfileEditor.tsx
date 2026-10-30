@@ -1,6 +1,7 @@
 import { useCallback,useEffect,useRef,useState,type FormEvent } from 'react';
 import { ArrowLeft,Check,RotateCcw } from 'lucide-react';
-import { Link,useBeforeUnload,useBlocker } from 'react-router';
+import { AppLink as Link } from '../ui/AppLink';
+import { useBeforeUnload, useBlocker } from 'react-router';
 import type { EditableProfile } from '../../domain/profile-editor';
 import { useProfileEditor } from '../../hooks/useProfileEditor';
 import { usePrivateAccess } from '../../app/PrivateAccessProvider';

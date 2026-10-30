@@ -8,13 +8,14 @@ import { MediaUploadError, sendMediaUpload } from './media-upload.ts';
 import { ProductLookupError, sendProductImport } from './product-import.ts';
 import { ProfileMutationError,sendProfileMutation } from './profile-editor.ts';
 import type { ProfileMutation } from '../domain/profile-editor.ts';
+import { AdminError,sendAdmin,type AdminRequest } from './organizer.ts';
 
 export type AccessState = { status: 'closed' } | { status: 'pending' | 'checking'; entryType: AccessType } |
   { status: 'ready'; entryType: AccessType; scope: AccessScope } |
   { status: 'unavailable'; entryType: AccessType } |
   { status: 'temporary'; entryType: AccessType; retryAt: number; rateLimited: boolean };
 type Validator = (token: string, participantId: string | undefined, signal: AbortSignal) => Promise<AccessScope>;
-export function createPrivateSession(validate: Validator = validatePrivateAccess, sendMutation: typeof sendGiftMutation = sendGiftMutation, sendUpload: typeof sendMediaUpload = sendMediaUpload, sendImport: typeof sendProductImport = sendProductImport, sendProfile:typeof sendProfileMutation=sendProfileMutation) {
+export function createPrivateSession(validate: Validator = validatePrivateAccess, sendMutation: typeof sendGiftMutation = sendGiftMutation, sendUpload: typeof sendMediaUpload = sendMediaUpload, sendImport: typeof sendProductImport = sendProductImport, sendProfile:typeof sendProfileMutation=sendProfileMutation,sendOrganizer:typeof sendAdmin=sendAdmin) {
   let credential: string | null = null;
   let kind: AccessType = 'participant';
   let state: AccessState = { status: 'closed' };
@@ -24,6 +25,7 @@ export function createPrivateSession(validate: Validator = validatePrivateAccess
   let pending: { promise: Promise<AccessScope | null>; participantId?: string } | null = null;
   let request: AbortController | null = null;
   let expiry: ReturnType<typeof setTimeout> | undefined;
+  let rotating:number|null=null;
   const listeners = new Set<() => void>();
   const publish = (next: AccessState) => { state = next; listeners.forEach((notify) => notify()); };
   function discard() { generation++; identity++; credential = null; request?.abort(); request = null; pending = null; clearTimeout(expiry); mutations.forEach((controller) => controller.abort()); mutations.clear(); }
@@ -42,6 +44,7 @@ export function createPrivateSession(validate: Validator = validatePrivateAccess
   }
   function verify(participantId?: string): Promise<AccessScope | null> {
     if (!credential) return Promise.resolve(null);
+    if(rotating===identity)return Promise.resolve(state.status==='ready'?state.scope:null);
     if (state.status === 'temporary' && state.retryAt > Date.now()) return Promise.resolve(null);
     if (state.status === 'ready' && participantId && !scopeCanEdit(state.scope, participantId)) return Promise.resolve(null);
     if (pending && pending.participantId === participantId) return pending.promise;
@@ -70,6 +73,27 @@ export function createPrivateSession(validate: Validator = validatePrivateAccess
   }
   return {
     begin, verify,
+    admin: async (operation:AdminRequest,signal:AbortSignal) => {
+      if(!credential||state.status!=='ready'||state.scope.accessType!=='organizer'||(state.scope.expiresAt&&Date.parse(state.scope.expiresAt)<=Date.now()))throw new AdminError('access');
+      if(mutations.has('admin'))throw new AdminError('busy');
+      const controller=new AbortController(),currentIdentity=identity,secret=credential;
+      mutations.set('admin',controller);const combined=AbortSignal.any([signal,controller.signal]);
+      const rotation=operation.action==='rotate_organizer_link';
+      if(rotation){rotating=currentIdentity;generation++;request?.abort();request=null;pending=null;}
+      try{
+        const result=await sendOrganizer(secret,operation,combined);
+        if(identity!==currentIdentity||combined.aborted)throw new AdminError('access');
+        if(rotation){
+          if(!result.private_link)throw new AdminError('uncertain');
+          const token=new URL(result.private_link).hash.slice(7);rotating=null;begin(token,'organizer');const replacementIdentity=identity;
+          await verify();if(identity!==replacementIdentity)throw new AdminError('access');
+        }
+        return result;
+      }catch(error){
+        if(identity===currentIdentity&&error instanceof AdminError&&((error.kind==='access'&&!combined.aborted)||(rotation&&error.kind==='uncertain')))unavailable();
+        throw error;
+      }finally{if(rotation&&rotating===currentIdentity)rotating=null;if(mutations.get('admin')===controller)mutations.delete('admin');}
+    },
     updateProfile: async (mutation:ProfileMutation,signal:AbortSignal) => {
       if(!credential||state.status!=='ready'||!scopeCanEdit(state.scope,mutation.participant_id)||(state.scope.expiresAt&&Date.parse(state.scope.expiresAt)<=Date.now()))throw new ProfileMutationError('access');
       const key=`profile:${mutation.participant_id}`;if(mutations.has(key))throw new ProfileMutationError('busy');

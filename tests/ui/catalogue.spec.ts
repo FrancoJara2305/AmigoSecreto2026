@@ -1,9 +1,9 @@
+import { apiOrigin as api,uiOrigin } from './fixtures/origins';
 import { mkdir } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const names = ['Melyza','Karina','Norma','Magaly','Cesar','Fabrizio','Brandon','Pamela','Franco','Derek Leonardo','Alice'];
-const api = 'http://127.0.0.1:4174';
 test.beforeEach(async ({ page }) => {
   // Tests must never reach a real project, even if the developer has .env.local configured.
   await page.route('**/*', (route) => {
@@ -89,7 +89,7 @@ test('loading state and failed request offer retry without provider detail or fa
   await page.route(`${api}/rest/v1/participants?**`, async (route) => {
     if (!fail) return route.continue();
     await new Promise((resolve) => setTimeout(resolve, 300));
-    return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ message: 'SQL provider detail secret' }), headers: { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173' } });
+    return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ message: 'SQL provider detail secret' }), headers: { 'Access-Control-Allow-Origin': uiOrigin } });
   });
   await page.goto('/');
   await expect(page.getByText('Preparando a los participantes…')).toBeAttached();
@@ -102,8 +102,8 @@ test('loading state and failed request offer retry without provider detail or fa
 });
 
 test('empty catalogue has zero count and settings remain editable data', async ({ page }) => {
-  await page.route(`${api}/rest/v1/participants?**`, (route) => route.fulfill({ json: [], headers: { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173' } }));
-  await page.route(`${api}/rest/v1/event_settings?**`, (route) => route.fulfill({ json: { title: 'Nuestra Navidad', welcome_message: 'Una bienvenida que cambié desde los datos.' }, headers: { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173' } }));
+  await page.route(`${api}/rest/v1/participants?**`, (route) => route.fulfill({ json: [], headers: { 'Access-Control-Allow-Origin': uiOrigin } }));
+  await page.route(`${api}/rest/v1/event_settings?**`, (route) => route.fulfill({ json: { title: 'Nuestra Navidad', welcome_message: 'Una bienvenida que cambié desde los datos.' }, headers: { 'Access-Control-Allow-Origin': uiOrigin } }));
   await page.goto('/');
   await expect(page.getByText('0 participantes', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'El encuentro está por comenzar' })).toBeVisible();

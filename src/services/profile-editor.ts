@@ -1,7 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../domain/database.types.ts';
 import { parseEditableProfile,profileErrors,type EditableProfile,type ProfileMutation } from '../domain/profile-editor.ts';
-import { getPublicSupabase } from './supabase.ts';
+import { getPublicSupabase,type PublicDataClient } from './supabase.ts';
 import { readPublicConfig,type PublicConfig } from './public-config.ts';
 import { retryAfterSeconds } from '../domain/retry-after.ts';
 import { validateMutation } from '../domain/mutation-validation.ts';
@@ -9,7 +7,7 @@ export class ProfileMutationError extends Error {
   readonly kind:'fields'|'conflict'|'uncertain'|'access'|'rate'|'busy';readonly fields:Record<string,string>;readonly retryAfter:number;
   constructor(kind:ProfileMutationError['kind'],fields:Record<string,string>={},retryAfter=0){super('Profile update unavailable');this.kind=kind;this.fields=fields;this.retryAfter=retryAfter;}
 }
-export async function loadEditableProfile(target:{slug:string}|{id:string},signal:AbortSignal,client?:SupabaseClient<Database>):Promise<EditableProfile|null> {
+export async function loadEditableProfile(target:{slug:string}|{id:string},signal:AbortSignal,client?:PublicDataClient):Promise<EditableProfile|null> {
   const byId='id' in target,key=byId?'id':'slug',value=byId?target.id:target.slug;
   if(byId?!/^[0-9a-f-]{36}$/.test(value):value.length>100||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))return null;
   const {data}=await (client??getPublicSupabase()).from('participants').select('id,name,slug,photo_path,photo_url,avatar_key,personal_message,general_preferences,version')

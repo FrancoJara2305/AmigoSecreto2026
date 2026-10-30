@@ -116,10 +116,10 @@ function StatesExample() {
 
 export function DesignPreview() {
   return <div id="inicio" className="design-preview">
-    <a className="skip-link" href="#contenido">Saltar al contenido</a>
+    <a tabIndex={0} className="skip-link" href="#contenido">Saltar al contenido</a>
     <header className="site-header page-width">
-      <a className="brand" href="#inicio"><span className="brand__icon"><Gift aria-hidden="true" /></span><span>amigo secreto<span className="brand__year">NAVIDAD 2026</span></span></a>
-      <nav aria-label="Navegación de la vista previa"><a href="#esencia">La esencia</a><a href="#detalles">Los detalles</a></nav>
+      <a tabIndex={0} className="brand" href="#inicio"><span className="brand__icon"><Gift aria-hidden="true" /></span><span>amigo secreto<span className="brand__year">NAVIDAD 2026</span></span></a>
+      <nav aria-label="Navegación de la vista previa"><a tabIndex={0} href="#esencia">La esencia</a><a tabIndex={0} href="#detalles">Los detalles</a></nav>
       <span className="preview-label"><span aria-hidden="true" />Vista previa</span>
     </header>
     <main id="contenido" tabIndex={-1}>
@@ -127,7 +127,7 @@ export function DesignPreview() {
         <div className="preview-hero__copy"><p className="eyebrow"><span aria-hidden="true">✦</span> UNA NAVIDAD PARA COMPARTIR</p>
           <h1 id="hero-title">La ilusión vive<br /><em>en los detalles.</em></h1>
           <p className="preview-hero__description">Unas pistas, tres deseos y muchas ganas de sorprender. Así empieza nuestro Amigo Secreto.</p>
-          <div className="preview-hero__actions"><LinkButton href="#detalles" icon={<ArrowDown />}>Explorar los detalles</LinkButton><a className="text-link" href="#esencia">Un primer vistazo<ArrowUpRight aria-hidden="true" /></a></div>
+          <div className="preview-hero__actions"><LinkButton href="#detalles" icon={<ArrowDown />}>Explorar los detalles</LinkButton><a tabIndex={0} className="text-link" href="#esencia">Un primer vistazo<ArrowUpRight aria-hidden="true" /></a></div>
           <p className="hero-footnote"><span className="hero-footnote__line" aria-hidden="true" />Un regalo puede ser pequeño. La ilusión, enorme.</p>
         </div>
         <div className="preview-hero__art"><ChristmasGifts /><div className="art-caption"><span aria-hidden="true">✧</span> ENVUELTO CON CARIÑO</div></div>
@@ -145,6 +145,6 @@ export function DesignPreview() {
       <section className="closing-note page-width" aria-label="Un encuentro para compartir"><span className="closing-note__icon"><Leaf aria-hidden="true" /></span>
         <p>No se trata del tamaño del regalo.<br /><em>Se trata de pensar en alguien.</em></p><span className="closing-note__stars" aria-hidden="true">✦</span></section>
     </main>
-    <footer className="site-footer page-width"><p>Hecho para compartir un poquito de ilusión.</p><a href="#inicio">Volver arriba<ArrowUpRight aria-hidden="true" /></a><span>AMIGO SECRETO · 2026</span></footer>
+    <footer className="site-footer page-width"><p>Hecho para compartir un poquito de ilusión.</p><a tabIndex={0} href="#inicio">Volver arriba<ArrowUpRight aria-hidden="true" /></a><span>AMIGO SECRETO · 2026</span></footer>
   </div>;
 }

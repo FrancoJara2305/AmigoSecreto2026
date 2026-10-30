@@ -1,10 +1,11 @@
 import { expect, type Page } from '@playwright/test';
 import type { Gift } from '../../../src/domain/database.types';
+import { apiOrigin,uiOrigin } from './origins';
 
 export const fixtureCredential = 'A'.repeat(43);
 export const fixtureOwner = '11111111-1111-4111-8111-000000000001';
-export const api = 'http://127.0.0.1:4174';
-const cors = { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173', 'Access-Control-Expose-Headers': 'Retry-After', 'Cache-Control': 'no-store' };
+export const api = apiOrigin;
+const cors = { 'Access-Control-Allow-Origin': uiOrigin, 'Access-Control-Expose-Headers': 'Retry-After', 'Cache-Control': 'no-store' };
 export function sampleGift(position = 1): Gift {
   return { id: `22222222-2222-4222-8222-${String(position).padStart(12,'0')}`, participant_id: fixtureOwner, position, title: 'Una idea guardada', description: 'Una descripción inicial.', image_path: null, image_url: null, product_url: null, reference_price: null, currency: 'PEN', gift_type: 'object', details: {}, version: 1, created_at: '2026-10-27T00:00:00Z', updated_at: '2026-10-27T00:00:00Z' };
 }
@@ -37,6 +38,9 @@ export async function editorFixture(page: Page, initial: Gift[] = [], organizer 
     expect(route.request().headers()['x-edit-token']).toBe(fixtureCredential);
     expect(JSON.stringify(body)).not.toContain(fixtureCredential);
     if (body.action === 'validate_access') return route.fulfill({ json: { access: { token_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', access_type: organizer ? 'organizer' : 'participant', participant_id: organizer ? null : target, participant_slug: organizer ? null : slug, expires_at: null } }, headers: cors });
+    // T20 mounts the organizer list before these tests navigate to the existing editors.
+    // A read is not a gift mutation and must not revoke their organizer fixture.
+    if(organizer&&body.action==='admin_list')return route.fulfill({json:{participants:[{id:target,name,slug,photo_path:null,photo_url:null,avatar_key:'star',personal_message:null,general_preferences:null,display_order:0,version:1,gift_count:state.gifts.length,link:{status:'none',expires_at:null}}],total:1,offset:body.offset??0,limit:body.limit??100,event:{id:1,title:'Evento de prueba',welcome_message:'Bienvenidos',exchange_date:null,version:1}},headers:cors});
     state.writes.push(body);
     if (state.delay) await new Promise((resolve) => setTimeout(resolve, state.delay));
     if (body.participant_id !== target) return route.fulfill({ status: 403, json: { error: { code: 'FORBIDDEN' } }, headers: cors });

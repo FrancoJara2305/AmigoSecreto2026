@@ -1,5 +1,6 @@
 import { generateToken, hashToken, isToken, privateLink } from './tokens.ts';
 import { mutationActions, validateMutation, type MutationRpcArgs } from './mutation-validation.ts';
+import { adminActions,validateAdmin,adminResponse,type AdminRpcArgs } from './admin-validation.ts';
 
 export type AccessAction = 'validate_access' | 'issue_participant_link' | 'revoke_participant_link' | 'rotate_organizer_link';
 export interface AccessRpcArgs {
@@ -15,6 +16,7 @@ export interface AccessDependencies {
   appBaseUrl: string;
   callRpc(args: AccessRpcArgs): Promise<AccessRpcResult>;
   callMutationRpc?(args: MutationRpcArgs): Promise<AccessRpcResult>;
+  callAdminRpc?(args:AdminRpcArgs):Promise<AccessRpcResult>;
 }
 const actions = new Set<AccessAction>(['validate_access', 'issue_participant_link', 'revoke_participant_link', 'rotate_organizer_link']);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -93,6 +95,13 @@ export function createAccessHandler(deps: AccessDependencies) {
     }
     const action = payload.action;
     if (typeof action !== 'string') return fail(422, 'INVALID_REQUEST');
+    if(adminActions.has(action)){
+      if(!deps.callAdminRpc)return fail(503,'SERVER_ERROR');
+      const validation=validateAdmin(payload);if(!validation.ok)return fail(422,'INVALID_REQUEST',validation.fields);
+      try{const result=await deps.callAdminRpc({...validation.args,p_token_hash:await hashToken(token)});
+        if(!result.ok)return rpcFailure(result);return reply(action==='create_participant'?201:200,adminResponse(validation.args.p_action,result));
+      }catch{return fail(503,'SERVER_ERROR');}
+    }
     if (mutationActions.has(action)) {
       if (!deps.callMutationRpc) return fail(503, 'SERVER_ERROR');
       const validation = validateMutation(payload);

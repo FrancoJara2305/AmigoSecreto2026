@@ -1,8 +1,8 @@
+import { apiOrigin as api,uiOrigin } from './fixtures/origins';
 import { mkdir } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const api = 'http://127.0.0.1:4174';
 const owner = '11111111-1111-4111-8111-000000000001';
 const person = { id: owner, name: 'Melyza', slug: 'melyza', avatar_key: 'star', photo_path: null, photo_url: null, personal_message: 'Un detalle para los días tranquilos.', general_preferences: 'Me gustan los tonos suaves.\nEvitar las fragancias intensas.' };
 // Fixtures only. Real participants remain without invented wishes in preview and local roster.
@@ -11,7 +11,21 @@ const gifts = [
   { ...baseGift, id: '22222222-2222-4222-8222-000000000001', position: 1, title: 'Un libro de relatos', description: 'Historias cortas para una pausa.\nPuede ser de un autor nuevo.', image_url: 'https://images.example.com/book.svg', reference_price: 59.90, product_url: 'https://example.com/producto', details: { category: 'Libros', specifications: 'Edición en español', notes: 'Sin sagas.' } },
   { ...baseGift, id: '22222222-2222-4222-8222-000000000003', position: 3, title: 'Zapatillas cómodas', reference_price: 19.90, currency: 'USD', gift_type: 'clothing', details: { subtype: 'footwear', size: '42', size_system: 'EU', color: 'Blanco', alternative_colors: ['Negro','Crema'] } },
 ];
-const cors = { 'Access-Control-Allow-Origin': 'http://127.0.0.1:4173' };
+const cors = { 'Access-Control-Allow-Origin': uiOrigin };
+test('delayed profile loading remains readable at 320px and 200 percent text before data arrives',async({page})=>{
+  let release!:()=>void;
+  const gate=new Promise<void>((resolve)=>{release=resolve;});
+  await page.route('**/*',(route)=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort());
+  await page.route(`${api}/rest/v1/participants?**`,async(route)=>{await gate;return route.fulfill({json:[{...person,gifts:[]}],headers:cors});});
+  try{
+    await page.setViewportSize({width:320,height:900});await page.goto('/participante/melyza');
+    const heading=page.getByRole('heading',{name:'Estamos preparando esta lista',exact:true});await expect(heading).toBeVisible();
+    await page.evaluate(()=>{document.documentElement.style.fontSize='200%';});
+    const bounds=await heading.boundingBox();expect(bounds).not.toBeNull();expect(bounds!.x).toBeGreaterThanOrEqual(0);expect(bounds!.x+bounds!.width).toBeLessThanOrEqual(320);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  }finally{release();}
+  await expect(page.getByRole('heading',{name:'Melyza',exact:true})).toBeVisible();
+});
 async function filled(page: Page, options: Record<string, unknown> = {}) {
   await page.route(`${api}/rest/v1/participants?**`, (route) => {
     if (!new URL(route.request().url()).searchParams.has('slug')) return route.continue();
@@ -99,11 +113,11 @@ test('copy shares only the public path and clipboard denial provides a selectabl
   await page.goto('/participante/melyza?private=do-not-copy#token=secret');
   await page.getByRole('button', { name: 'Copiar perfil público' }).click();
   await expect(page.getByText('Enlace público copiado', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toBe('http://127.0.0.1:4173/participante/melyza');
+  expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toBe(`${uiOrigin}/participante/melyza`);
   await page.evaluate(() => { Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('denied'); } } }); });
   await page.getByRole('button', { name: 'Copiar perfil público' }).click();
   const input = page.getByLabel('Enlace público', { exact: true });
-  await expect(input).toHaveValue('http://127.0.0.1:4173/participante/melyza'); await expect(input).toBeFocused();
+  await expect(input).toHaveValue(`${uiOrigin}/participante/melyza`); await expect(input).toBeFocused();
 });
 
 test('broken gift and avatar photos fall back and unsafe store links are not rendered', async ({ page }) => {

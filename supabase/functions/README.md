@@ -1,35 +1,39 @@
-# Edge Functions: acceso, edición e imágenes locales
+# Edge Functions: operación actual
 
-T14 habilita `media-upload` junto a `wishlist-api` con validación explícita de enlaces privados, sin cuentas Auth. Incluye códecs WASM y archivos estáticos reproducibles; no usa claves privilegiadas en el navegador. La limpieza se ejecuta desde un script local, sin endpoint público. Ver [guía de T14](../../docs/media-upload.md) para contratos, límites y ensayos reales. No se desplegó ninguna función.
+Las tres funciones están implementadas y comprobadas en local. No se ha desplegado ninguna. No hay cuentas Supabase Auth ni endpoints públicos de bootstrap, recuperación o limpieza.
 
-T15 añade una barrera persistente de cuotas antes del cuerpo, además de las cuotas atómicas de sus operaciones en SQL. `RATE_LIMIT_IP_SOURCE=off` ignora cabeceras de IP no verificadas y conserva el límite global; el modo explícito de proveedor verificado requiere HMAC de servidor. Nunca se confía por defecto en `X-Forwarded-For`. Ver [T15](../../docs/rate-limits.md) para límites por minuto/hora, mantenimiento y pruebas.
-
-T16 habilita `product-metadata` en local con autorización por enlace, cuotas y parser. La descarga usa el único adaptador Node condicional previsto en el plan, solicitudes/respuestas firmadas y callback de consumo atómico antes de DNS. El adaptador no recibe tokens de participantes ni claves de base de datos. Sin secreto y transporte configurados devuelve 503; no existe descarga directa de respaldo. Ver [T16](../../docs/product-import.md) para la decisión TLS/DNS, archivos de entorno y pruebas. [T17](../../docs/product-import-ui.md) integra la selección de campos en el editor y añade `npm.cmd run test:import:ui:local` para comprobar navegador→Edge→Node→SQL en local. No se cambió el contrato del servidor en T17.
-
-## Antecedentes de T07/T08
-
-T18 conecta el formulario de perfil a `update_profile` y a `media-upload`/`avatar`, con los mismos controles existentes; no cambia SQL ni handlers. `npm.cmd run test:profile:ui:local` comprueba foto pendiente, asociación/reemplazo, mensaje y gustos, acceso ajeno y versión antigua contra la pila local real. Ver [T18](../../docs/profile-editor.md). Sin despliegue remoto.
-
-T07 habilita únicamente las operaciones de enlaces privados de `wishlist-api` en local:
-
-| Función | Responsabilidad futura |
+| Función | Operación y autorización |
 | --- | --- |
-| `wishlist-api` | T07: ciclo de enlaces. T08: actualizar perfil, crear/editar/limpiar regalos con ámbito y versión. |
-| `product-metadata` | Importación asistida con límites, cuotas y transporte resistente a SSRF. |
-| `media-upload` | Validación/recodificación y carga de archivos pertenecientes al participante. |
+| wishlist-api | Acceso privado, perfil/regalos, altas/orden/bajas/evento y ciclo de enlaces. Capacidad por X-Edit-Token, hash/rol/propietario/versión y revocación comprobados en SQL. |
+| media-upload | Capacidad y pertenencia antes del cuerpo; límites, validación binaria, recodificación WebP y segunda autorización tras Storage. Solo devuelve una ruta pendiente; guardar la asocia. |
+| product-metadata | Capacidad y cuota antes de consultar; transporte Node resistente a SSRF, firma HMAC, callback con nonce SQL de un solo uso y revalidación antes de devolver sugerencias. No guarda regalos. |
 
-`config.toml` habilita Edge Runtime y wishlist-api con `verify_jwt = false`: su handler exige `X-Edit-Token` y valida el hash, permisos, expiración y revocación mediante RPC restringidas al servidor. CORS usa orígenes exactos y las respuestas son no-store. Sin configuración de orígenes falla cerrado. La API no admite bootstrap/recuperación ni flags de administrador. Las mutaciones de T08 validan el token en la misma transacción que guarda.
+verify_jwt=false está definido por función porque la autorización usa enlaces privados, no JWT de Auth. Mantener sus handlers, RPC privadas y límites: apagar la comprobación de plataforma no autoriza escritura. CORS exacto se valida en el handler; el gateway local puede añadir CORS propio, como se documentó en [seguridad](../../docs/security-review.md).
 
-Las tres funciones usan `verify_jwt = false` porque sus handlers aplican la autorización propia de enlaces privados. `product-metadata` exige la capability para preparar una importación; su rama operativa de callback exige HMAC y reserva vigente de un solo uso. `media-upload` exige la capability, usa dos comprobaciones SQL y procesa archivos con límites; ver T14 arriba. No se usa Supabase Auth.
+## Iniciar localmente
 
-Estado y requisitos de las próximas tareas:
+~~~cmd
+npm.cmd run functions:local
+~~~
 
-1. T07 completo: generación criptográfica y bootstrap local; solo hashes SHA-256. Sin endpoint público de bootstrap.
-2. T07 completo: validación de token, expiración, revocación, rol y propietario, incluidas pruebas HTTP reales.
-3. T08 completo: mutaciones con token bloqueado y comparación de versión. La clave privilegiada elude RLS; la autorización se comprueba explícitamente en SQL.
-4. T15 completo: cuotas atómicas, cuerpos acotados, CORS exacto y no-store en las operaciones protegidas.
-5. Pruebas de acceso cruzado entre dos participantes y revocación desde una pestaña abierta.
-6. T14/T16 completos en local: archivos decodificados con pertenencia; metadatos con DNS/rebinding/redirecciones, timeouts y tamaños comprobados antes de descargar.
-7. Ensayos con Deno/Edge Runtime real y PostgreSQL local realizados, además de pruebas de handlers y TLS en Node. Validación alojada pendiente.
+Usa supabase/functions/.env.example con orígenes locales. Acceso, mutaciones y carga funcionan; importación queda sin transporte y falla cerrada, conservando la edición manual. Para valores propios usar un archivo ignorado y no sobrescribirlo:
 
-La emisión/rotación, validación, CRUD, uploads y servidor de metadatos están implementados en local. Consulta [T07](../../docs/private-access.md), [T08](../../docs/protected-mutations.md), [T14](../../docs/media-upload.md) y [T16](../../docs/product-import.md). No desplegar las funciones a producción en esta iteración.
+~~~cmd
+npm.cmd run supabase -- functions serve --env-file supabase/functions/.env.local
+~~~
+
+[Entornos y secretos](../../docs/environment.md) describe las variables, proxy, callback y HMAC. SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY son del runtime, nunca del navegador o del proxy Node. El modo de identidad IP permanece off hasta verificar todas las entradas del proveedor.
+
+Los códecs WASM de media-upload/vendor tienen versiones, licencias y hashes; npm.cmd run vendor:images reproduce el vendorizado desde dependencias fijadas. No usar CDN para cargarlos en ejecución.
+
+## Validar y mantener
+
+~~~cmd
+npm.cmd run test:security:local
+npm.cmd run test:admin:ui:local
+npm.cmd run test:recovery:local
+~~~
+
+Ejecutarlos secuencialmente: usan AmigoSecretoAdminTest y la retiran al terminar. El ensayo de recuperación comprueba DB/Storage/permisos y enlaces restaurados, sin modificar tu instancia principal.
+
+La limpieza usa los comandos administrativos locales y sus recibos, nunca un endpoint público o DELETE directo en storage.objects. Contratos: [acceso](../../docs/private-access.md), [mutaciones](../../docs/protected-mutations.md), [imágenes](../../docs/media-upload.md), [cuotas](../../docs/rate-limits.md), [importación](../../docs/product-import.md) y [administración](../../docs/organizer-backend.md). Preparación de publicación/rollback: [T25 pendiente](../../docs/deployment-review.md).

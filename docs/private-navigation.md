@@ -10,7 +10,7 @@ Los enlaces de T07 ya se abren en React. Un enlace personal usa `/acceso#token=�
 4. Valida la forma de la respuesta y el rol esperado por la ruta. El participante entra a su perfil; el organizador a `/organizador`. La navegación reemplaza la entrada de acceso en el historial.
 5. Los controles solo aparecen para el UUID autorizado o un organizador validado. Entrar a un destino privado vuelve a comprobar la credencial en servidor, indicando el UUID de destino cuando corresponde. Alterar el slug, posición o URL no crea permisos.
 
-El contexto solo ofrece estado y operaciones de validación/cierre, sin un getter del token. El futuro transporte de mutaciones deberá permanecer dentro de esta sesión; el backend T08 seguirá autorizando cada escritura en su propia transacción. Los permisos visuales no sustituyen esa comprobación.
+El contexto ofrece estado y operaciones autorizadas de validación, cierre, edición, medios, importación y administración, sin un getter del token. El transporte mantiene la credencial dentro de la sesión; el backend autoriza cada escritura en su propia transacción. Los permisos visuales no sustituyen esa comprobación.
 
 ## Estado y cierre
 

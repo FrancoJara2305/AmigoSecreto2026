@@ -8,8 +8,8 @@ Se mantienen los límites iniciales de T07/T08 y el límite de ráfaga de T14. T
 
 | Operación | Global/minuto | Por token/minuto | Por token/hora |
 | --- | --- | --- | --- |
-| Validación y ciclo de enlaces | 120 | 30 | — |
-| Edición de perfil/regalos | 240 | 60 | — |
+| Validación, ciclo de enlaces y listado administrativo T19 | 120 | 30 | — |
+| Edición de perfil/regalos y escrituras administrativas T19 | 240 | 60 | — |
 | Reserva de subida | 120 | 6 | **10** |
 | Importación, operación autorizada T16 | 60 | 5 | 30 |
 

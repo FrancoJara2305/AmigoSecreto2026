@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeft, Check, Link2, RotateCcw, Trash2 } from 'lucide-react';
-import { Link, useBeforeUnload, useBlocker } from 'react-router';
+import { AppLink as Link } from '../ui/AppLink';
+import { useBeforeUnload, useBlocker } from 'react-router';
 import type { Gift } from '../../domain/database.types';
 import { displayPrice, giftDetails } from '../../domain/profile';
 import { useGiftEditor } from '../../hooks/useGiftEditor';

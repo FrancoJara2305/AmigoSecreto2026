@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { Link, useLocation, useParams } from 'react-router';
+import { AppLink as Link } from '../components/ui/AppLink';
+import { useLocation, useParams } from 'react-router';
 import { usePrivateAccess } from '../app/PrivateAccessProvider';
 import { usePublicProfile } from '../hooks/usePublicProfile';
 import { scopeCanEdit } from '../domain/private-access';

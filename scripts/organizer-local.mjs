@@ -33,5 +33,5 @@ if (result.error || result.status !== 0) {
 } else {
   console.log(recover ? 'Enlace anterior revocado. Guarda el nuevo enlace privado:' : 'Organizador local preparado. Guarda este enlace privado:');
   console.log(link);
-  console.log('Se muestra una sola vez. La pantalla de T12 valida este enlace con wishlist-api local; el panel de administración llega en T20.');
+  console.log('Se muestra una sola vez. Abre el enlace con la aplicación y wishlist-api locales activos; entrarás al panel del organizador.');
 }

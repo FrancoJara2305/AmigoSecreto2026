@@ -13,3 +13,7 @@ supabase/.branches/
 playwright-report/
 test-results/
 artifacts/
+backups/
+*.dump
+*.backup
+.vercel/
