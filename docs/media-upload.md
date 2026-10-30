@@ -1,6 +1,6 @@
 # T14: imágenes autorizadas y limpieza
 
-Implementado y probado **solo en local**. No se vinculó ni modificó la instancia remota. La foto de perfil utiliza el mismo servidor con propósito `avatar`; su formulario sigue en T18. El servidor de importación se completó en [T16](product-import.md); su interfaz continúa en T17.
+Implementado y probado **solo en local**. No se vinculó ni modificó la instancia remota. La foto de perfil utiliza el mismo servidor con propósito `avatar`; su formulario está implementado en [T18](profile-editor.md). El servidor de importación se completó en [T16](product-import.md) y su interfaz en [T17](product-import-ui.md).
 
 ## Archivos creados o modificados en T14
 

@@ -9,6 +9,7 @@ const ParticipantProfilePage = lazy(() => import('../pages/ParticipantProfilePag
 const PrivateAccessPage = lazy(() => import('../pages/PrivateAccessPage').then((module) => ({ default: module.PrivateAccessPage })));
 const PrivateDestinationPage = lazy(() => import('../pages/PrivateDestinationPage').then((module) => ({ default: module.PrivateDestinationPage })));
 const GiftEditorPage = lazy(() => import('../pages/GiftEditorPage').then((module) => ({ default: module.GiftEditorPage })));
+const ProfileEditorPage = lazy(() => import('../pages/ProfileEditorPage').then((module) => ({ default: module.ProfileEditorPage })));
 function AnchorNavigation() {
   const { pathname, hash, key } = useLocation();
   useEffect(() => {
@@ -30,7 +31,7 @@ export function App() {
     { path: '/acceso', element: <PrivateAccessPage type="participant" /> },
     { path: '/organizador/acceso', element: <PrivateAccessPage type="organizer" /> },
     { path: '/organizador', element: <PrivateDestinationPage mode="organizer" /> },
-    { path: '/participante/:slug/editar', element: <PrivateDestinationPage mode="profile" /> },
+    { path: '/participante/:slug/editar', element: <ProfileEditorPage /> },
     { path: '/participante/:slug/regalo/:position/editar', element: <GiftEditorPage /> },
     { path: '/diseno', element: <DesignPreview /> },
     { path: '*', element: <AppLayout><section className="profile-pending page-width"><h1>No encontramos esta página.</h1><Link className="text-link" to="/">Volver a participantes</Link></section></AppLayout> },

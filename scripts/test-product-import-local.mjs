@@ -12,7 +12,8 @@ import { createFetchProxy,callbackClaim } from '../server/product-fetch/proxy.ts
 import { createProductDownloader,pinnedExchange } from '../server/product-fetch/transport.ts';
 import { generateToken,hashToken } from '../supabase/functions/_shared/tokens.ts';
 import { signFetch } from '../supabase/functions/_shared/fetch-protocol.ts';
-if(process.argv.length!==2)throw new Error('Prueba de importación solo local, sin argumentos.');
+const withBrowser=process.argv.length===3&&process.argv[2]==='--ui';
+if(process.argv.length!==2&&!withBrowser)throw new Error('Prueba de importación solo local; único argumento admitido: --ui.');
 const endpoint=process.platform==='win32'?'npipe:////./pipe/docker_engine':'unix:///var/run/docker.sock';
 const base='http://127.0.0.1:54321',functionUrl=`${base}/functions/v1/product-metadata`;
 const owner=randomUUID(),other=randomUUID(),token=generateToken(),hash=await hashToken(token),secret=generateToken();
@@ -36,7 +37,7 @@ try{
   // Docker Desktop reaches Windows through host.docker.internal. HMAC+SQL claim remain mandatory.
   await new Promise((resolve,reject)=>{proxy.once('error',reject);proxy.listen(54801,'0.0.0.0',resolve);});
   await mkdir(new URL('../artifacts/',import.meta.url),{recursive:true});
-  await writeFile(envPath,`APP_ALLOWED_ORIGINS=http://localhost:5173\nAPP_BASE_URL=http://localhost:5173\nRATE_LIMIT_IP_SOURCE=off\nFETCH_PROXY_URL=http://host.docker.internal:54801/fetch-product\nFETCH_PROXY_HMAC_SECRET=${secret}\nAPP_LOCAL_FETCH_PROXY=1\n`);
+  await writeFile(envPath,`APP_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5176\nAPP_BASE_URL=http://localhost:5173\nRATE_LIMIT_IP_SOURCE=off\nFETCH_PROXY_URL=http://host.docker.internal:54801/fetch-product\nFETCH_PROXY_HMAC_SECRET=${secret}\nAPP_LOCAL_FETCH_PROXY=1\n`);
   const require=createRequire(import.meta.url);const suffix=process.platform==='win32'?'windows-x64':`${process.platform}-${process.arch}`;
   const binary=join(dirname(require.resolve(`@supabase/cli-${suffix}/package.json`)),'bin',`supabase${process.platform==='win32'?'.exe':''}`);
   cli=spawn(binary,['functions','serve','--env-file',fileURLToPath(envPath)],{stdio:['ignore','pipe','pipe'],windowsHide:true});
@@ -71,11 +72,13 @@ try{
   assert.equal(sql(`select count(*) from public.gifts where participant_id='${owner}';`),'0');
   console.log('OK Edge real -> Node -> TLS sintético -> callback SQL -> parser: datos sugeridos, moneda intacta, ningún regalo guardado.');
   console.log('OK pertenencia, replay, DNS mixto sin conexión, 403/captcha manuales y cuota antes de transporte.');
+  if(withBrowser){phase='browser preview/apply/save';await (await import('../tests/support/import-browser.mjs')).runImportBrowser(sql);}
 }catch{console.error(`Falló el ensayo local de importación (${phase}). No se imprimen secretos ni enlaces privados.`);if(/boot error|not found|Cannot resolve/.test(log))console.error('Revisa la resolución de dependencias del runtime local.');process.exitCode=1;}
 finally{
   cli?.kill();if(cli)await Promise.race([new Promise((r)=>cli.once('close',r)),new Promise((r)=>setTimeout(r,2000))]);
   if(cli)spawnSync('docker',['--host',endpoint,'stop','supabase_edge_runtime_AmigoSecreto2026'],{encoding:'utf8',timeout:20000});
   for(const server of [proxy,shop])if(server){server.closeAllConnections();await new Promise((r)=>server.close(()=>r()));}
-  sql(`delete from public.participants where id in ('${owner}','${other}');delete from private.rate_limits where key_hash=decode('${hash}','hex');`);
-  await rm(envPath,{force:true});
+  try {sql(`delete from public.participants where id in ('${owner}','${other}');delete from private.rate_limits where key_hash=decode('${hash}','hex');`);}
+  catch {console.error('No se pudo verificar la limpieza SQL local. Revisa Docker; no se imprimen datos de prueba.');process.exitCode=1;}
+  finally {await rm(envPath,{force:true});}
 }

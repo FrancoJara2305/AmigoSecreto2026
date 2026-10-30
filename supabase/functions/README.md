@@ -4,9 +4,11 @@ T14 habilita `media-upload` junto a `wishlist-api` con validación explícita de
 
 T15 añade una barrera persistente de cuotas antes del cuerpo, además de las cuotas atómicas de sus operaciones en SQL. `RATE_LIMIT_IP_SOURCE=off` ignora cabeceras de IP no verificadas y conserva el límite global; el modo explícito de proveedor verificado requiere HMAC de servidor. Nunca se confía por defecto en `X-Forwarded-For`. Ver [T15](../../docs/rate-limits.md) para límites por minuto/hora, mantenimiento y pruebas.
 
-T16 habilita `product-metadata` en local con autorización por enlace, cuotas y parser. La descarga usa el único adaptador Node condicional previsto en el plan, solicitudes/respuestas firmadas y callback de consumo atómico antes de DNS. El adaptador no recibe tokens de participantes ni claves de base de datos. Sin secreto y transporte configurados devuelve 503; no existe descarga directa de respaldo. Ver [T16](../../docs/product-import.md) para la decisión TLS/DNS, archivos de entorno y pruebas. La selección de campos en la UI sigue en T17.
+T16 habilita `product-metadata` en local con autorización por enlace, cuotas y parser. La descarga usa el único adaptador Node condicional previsto en el plan, solicitudes/respuestas firmadas y callback de consumo atómico antes de DNS. El adaptador no recibe tokens de participantes ni claves de base de datos. Sin secreto y transporte configurados devuelve 503; no existe descarga directa de respaldo. Ver [T16](../../docs/product-import.md) para la decisión TLS/DNS, archivos de entorno y pruebas. [T17](../../docs/product-import-ui.md) integra la selección de campos en el editor y añade `npm.cmd run test:import:ui:local` para comprobar navegador→Edge→Node→SQL en local. No se cambió el contrato del servidor en T17.
 
 ## Antecedentes de T07/T08
+
+T18 conecta el formulario de perfil a `update_profile` y a `media-upload`/`avatar`, con los mismos controles existentes; no cambia SQL ni handlers. `npm.cmd run test:profile:ui:local` comprueba foto pendiente, asociación/reemplazo, mensaje y gustos, acceso ajeno y versión antigua contra la pila local real. Ver [T18](../../docs/profile-editor.md). Sin despliegue remoto.
 
 T07 habilita únicamente las operaciones de enlaces privados de `wishlist-api` en local:
 

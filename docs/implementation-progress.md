@@ -21,7 +21,16 @@ Trabajo autorizado por iteraciones. Todo el trabajo aplicado hasta ahora se limi
 | **T14** | **Completa en local:** subida autorizada, decodificación y WebP, asociación transaccional, limpieza con reintentos y pruebas SQL/Edge/Storage/concurrencia/UI. |
 | **T15** | **Completa en local:** cuotas compartidas por minuto/hora, barrera de entrada, 429/Retry-After, limpieza acotada y concurrencia. Identidad IP solo tras verificar proveedor; fallback global activo. |
 | **T16** | **Completa en local:** importación autorizada, cuotas, transporte HTTPS con IP fijada, protocolo firmado de un solo uso, parser y alternativa manual. Configuración ausente falla cerrada. |
-| T17–T25 | Pendientes: selección/aplicación de sugerencias en T17, perfil en T18 y administración en T20. |
+| **T17** | **Completa en local:** vista previa con fuentes, selección por campo, moneda verificada y aplicación solo al borrador; cancelación, respuestas obsoletas y cuotas. Recorrido real de navegador/Edge/Node/SQL probado. |
+| T18–T25 | Pendientes: perfil en T18 y administración en T20, además de los bloques posteriores del plan. |
+
+## T17: vista previa y aplicación selectiva
+
+Ver [guía de la interfaz de importación](product-import-ui.md). El editor consulta solo al pulsar el botón, presenta los campos encontrados con fuente y marca por defecto únicamente los vacíos. Precio/moneda se revisan juntos: no hay conversión USD→PEN ni moneda inferida; un precio sin moneda requiere confirmación expresa. Aplicar modifica solo el borrador. El guardado sigue usando las mutaciones autorizadas y versionadas existentes.
+
+Cancelar, cambiar el borrador o perder acceso descarta solicitudes/sugerencias. La sesión verifica rol/propietario, aborta al cerrar/reemplazar credencial y rechaza respuestas antiguas. Un 429 solo pausa la importación, conservando el formulario manual. No se cargan imágenes de la tienda hasta aplicar ese campo. Modelo se limita al tipo objeto del esquema existente; talla/ajuste nunca se infieren.
+
+El ensayo real local comprobó desde navegador que consultar y aplicar dejan cero regalos en PostgreSQL, y solo Guardar crea la opción con el título revisado y USD intacto. Se limpiaron participantes, secretos efímeros y servidores propios. TypeScript, 92 pruebas unitarias, 207 casos UI completos y build correctos; permanece el aviso previo de chunk de Vite. La regresión detectó y corrigió una habilitación transitoria del selector de imágenes tras 429, con seis comprobaciones dirigidas adicionales. No hay nuevas dependencias, migraciones ni cambios de configuración del usuario, datos del roster o instancia remota. Los resultados completos están en [validación](validation-results.md).
 
 ## T16: transporte seguro y parser
 

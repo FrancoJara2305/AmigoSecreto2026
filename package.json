@@ -31,6 +31,8 @@
     "test:rates:concurrency": "node scripts/test-rate-limits-concurrency.mjs",
     "test:rates:http": "node scripts/test-rate-limits-http.mjs",
     "test:import:local": "node scripts/test-product-import-local.mjs",
+    "test:import:ui:local": "node scripts/test-product-import-local.mjs --ui",
+    "test:profile:ui:local": "node scripts/test-profile-ui-local.mjs",
     "test:import:concurrency": "node scripts/test-import-concurrency.mjs",
     "probe:edge:network": "node scripts/probe-edge-network.mjs",
     "fetch-proxy:local": "node --env-file=server/product-fetch/.env.local scripts/serve-product-fetch-local.mjs",

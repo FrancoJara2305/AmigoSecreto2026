@@ -16,10 +16,17 @@ export default defineConfig(({ mode }) => {
   if (Object.keys(env).length > 0) readPublicConfig({ ...env, VITE_APP_URL: env.VITE_APP_URL || 'http://localhost:5173' });
   return {
     plugins: [react(), tailwindcss()],
+    // Automated runs must not reload after a capability has been consumed. Manual
+    // reload still clears access; normal development keeps its watcher and HMR.
+    server: process.env.APP_LOCAL_UI_TEST === '1' || process.env.APP_LOCAL_IMPORT_TEST === '1' || process.env.APP_LOCAL_PROFILE_TEST === '1'
+      ? { watch: null, hmr: false } : undefined,
     // Independent previews use different public destinations. Sharing optimizer caches can
     // trigger a reload, which correctly erases the capability kept only in memory.
-    cacheDir: process.env.APP_LOCAL_PREVIEW === '1' ? 'node_modules/.vite-preview' :
-      process.env.APP_LOCAL_MEDIA_TEST === '1' ? 'node_modules/.vite-media-test' : 'node_modules/.vite',
+    cacheDir: process.env.APP_LOCAL_UI_TEST === '1' ? 'node_modules/.vite-ui-test' :
+      process.env.APP_LOCAL_PREVIEW === '1' ? 'node_modules/.vite-preview' :
+      process.env.APP_LOCAL_MEDIA_TEST === '1' ? 'node_modules/.vite-media-test' :
+      process.env.APP_LOCAL_IMPORT_TEST === '1' ? 'node_modules/.vite-import-test' :
+      process.env.APP_LOCAL_PROFILE_TEST === '1' ? 'node_modules/.vite-profile-test' : 'node_modules/.vite',
     optimizeDeps: { include: ['react','react/jsx-runtime','react-dom','react-dom/client','react-router','lucide-react','@supabase/supabase-js'] },
   };
 });

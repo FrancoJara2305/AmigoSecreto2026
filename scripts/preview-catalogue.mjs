@@ -51,7 +51,7 @@ try {
         const slugFilter = requestUrl.searchParams.get('slug');
         if (slugFilter !== null) {
           if (!/^eq\.[a-z0-9]+(-[a-z0-9]+)*$/.test(slugFilter) || slugFilter.length > 103) { response.writeHead(400).end('{}'); return; }
-          const { rows } = await db.query(`select p.id,p.name,p.slug,p.photo_path,p.photo_url,p.avatar_key,p.personal_message,p.general_preferences,
+          const { rows } = await db.query(`select p.id,p.name,p.slug,p.photo_path,p.photo_url,p.avatar_key,p.personal_message,p.general_preferences,p.version,
             coalesce((select jsonb_agg(g order by g.position) from public.gifts g where g.participant_id=p.id), '[]'::jsonb) as gifts
             from public.participants p where p.slug=$1`, [slugFilter.slice(3)]);
           response.end(JSON.stringify(rows)); return;

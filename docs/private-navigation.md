@@ -79,3 +79,7 @@ Se comprueban encabezados sin token en URL/cuerpo, ausencia de persistencia, ais
 T12 se probó con transporte de acceso controlado y PostgreSQL temporal para lecturas públicas. **No se ensayó el nuevo recorrido completo contra Edge/Docker real ni se consultó la instancia remota.** Las comprobaciones reales del backend registradas en T07/T08 siguen siendo las de esas iteraciones.
 
 Referencia técnica: [cabeceras de autorización de Edge Functions](https://supabase.com/docs/guides/functions/auth-headers). La clave pública identifica el proyecto; la credencial personalizada y el servidor determinan los permisos.
+
+## Actualización T18
+
+La ruta `/participante/:slug/editar` ya contiene el formulario autorizado de foto, mensaje y preferencias. Conserva el borrador durante revalidaciones y retira el permiso de guardar tras una denegación. Su recorrido básico con enlace efímero, servidor real local, Storage y SQL se comprobó en T18; recargar no hereda acceso. Ver [perfil editable](profile-editor.md). La administración visual sigue en T20.

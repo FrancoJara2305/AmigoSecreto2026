@@ -15,5 +15,5 @@ export function usePrivateAccess() {
   const session = useContext(PrivateAccessContext);
   if (!session) throw new Error('PrivateAccessProvider required');
   const state = useSyncExternalStore(session.subscribe, session.snapshot);
-  return { state, verify: session.verify, close: session.close, mutate: session.mutate, upload: session.upload };
+  return { state, verify: session.verify, close: session.close, mutate: session.mutate, upload: session.upload, importProduct: session.importProduct, updateProfile: session.updateProfile };
 }

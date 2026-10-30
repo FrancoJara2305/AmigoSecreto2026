@@ -67,3 +67,7 @@ Comprueba guardar con título/tipo, editar conservando las otras opciones, cance
 Docker no tenía un daemon accesible durante T13. Los recorridos del editor usan un transporte estatal de prueba aislado, con casos de confirmación, conflicto y respuesta perdida; SQL se comprueba en PostgreSQL embebido. **No se verificó este nuevo recorrido completo contra Edge/Docker real.** No se insertaron deseos en el roster ni se modificaron la configuración, las credenciales o los datos reales del usuario.
 
 Referencias: [bloqueo de navegación de React Router](https://reactrouter.com/api/hooks/useBlocker), [router de datos](https://reactrouter.com/start/data/installation) y [errores de Edge Functions](https://supabase.com/docs/guides/functions/error-handling).
+
+## Actualización T17
+
+El enlace de producto ya permite consultar sugerencias de T16, revisar sus fuentes y aplicar únicamente los campos elegidos al borrador. Se conservan valores existentes, moneda y detalles personales; solo Guardar persiste. El recorrido completo con navegador, Edge, transporte Node, TLS sintético y PostgreSQL locales se verificó en T17, con participantes efímeros separados del roster. Ver [uso, límites, archivos y comandos](product-import-ui.md).

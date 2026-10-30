@@ -1,4 +1,4 @@
-.catalogue-header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+.catalogue-header { min-height: 76px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; }
 .catalogue-brand { display: inline-flex; align-items: center; gap: .7rem; min-height: 44px; max-width: 75%; text-decoration: none; font: 500 1.35rem/1.2 var(--font-display); }
 .catalogue-brand__icon { display: grid; place-items: center; width: 36px; height: 40px; flex-shrink: 0; background: var(--color-forest); color: var(--color-cream); border-radius: 11px 11px 11px 3px; }
 .catalogue-brand__icon svg { width: 22px; height: 22px; stroke-width: 1.4; }

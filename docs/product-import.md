@@ -1,6 +1,6 @@
 # T16: transporte seguro y parser de productos
 
-Implementado y validado **solo en local**. No se consultó la instancia alojada, no se vincularon proyectos ni se desplegaron funciones. La vista previa con selección de campos y su integración con el editor siguen en **T17**. T16 devuelve sugerencias y nunca guarda regalos.
+Implementado y validado **solo en local**. No se consultó la instancia alojada, no se vincularon proyectos ni se desplegaron funciones. La vista previa y aplicación selectiva al editor se completaron después en [T17](product-import-ui.md). T16 devuelve sugerencias y nunca guarda regalos.
 
 ## Decisión de transporte: parte pendiente de T01
 
@@ -113,7 +113,7 @@ npm.cmd run fetch-proxy:local
 npm.cmd run supabase -- functions serve --env-file supabase/functions/.env.local
 ```
 
-El proxy de desarrollo escucha temporalmente en el puerto 54801 para que Docker Desktop pueda llegar al host Windows; exige HMAC y reserva de un solo uso antes de cualquier descarga. Ctrl+C lo cierra. `functions:local` sigue usando el ejemplo sin transporte configurado, para fallar cerrado por defecto. La UI actual conserva su edición manual y no muestra todavía la selección de importación de T17.
+El proxy de desarrollo escucha temporalmente en el puerto 54801 para que Docker Desktop pueda llegar al host Windows; exige HMAC y reserva de un solo uso antes de cualquier descarga. Ctrl+C lo cierra. `functions:local` sigue usando el ejemplo sin transporte configurado, para fallar cerrado por defecto. La UI de T17 ofrece importar cuando hay enlace y acceso de edición; ante falta de transporte se conserva la alternativa manual. Consulta [T17](product-import-ui.md) para probar el recorrido completo de navegador con `npm.cmd run test:import:ui:local`.
 
 ## Archivos de esta iteración
 

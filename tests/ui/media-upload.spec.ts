@@ -64,8 +64,9 @@ test('hourly upload quota respects Retry-After, preserves text and still permits
   expect(state.gifts[0].image_path).toBeNull(); expect(state.uploads).toHaveLength(1);
 });
 test('upload cooldown enables explicit retry without automatically sending another file',async({page})=>{
-  const state=await editorFixture(page); state.uploadFault=429; state.uploadRetryAfter='1'; await openEditor(page);
+  const state=await editorFixture(page); state.uploadFault=429; state.uploadRetryAfter='2'; await openEditor(page);
   await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);
+  await expect(page.getByText('Alcanzaste el límite de imágenes.',{exact:false})).toBeVisible();
   await expect(page.getByLabel('Subir imagen',{exact:true})).toBeDisabled();
   await expect(page.getByLabel('Subir imagen',{exact:true})).toBeEnabled(); expect(state.uploads).toHaveLength(1);
   state.uploadFault=0; await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(png);

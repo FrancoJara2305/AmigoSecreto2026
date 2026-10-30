@@ -21,6 +21,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run preview:local -- --port 4173',
+    env: { APP_LOCAL_UI_TEST: '1' },
     url: 'http://127.0.0.1:4173',
     // Never reuse a server that could load the user's remote .env.local destination.
     reuseExistingServer: false,

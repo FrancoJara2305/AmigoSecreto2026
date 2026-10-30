@@ -43,6 +43,11 @@ export function useGiftEditor(participantId: string, slug: string, position: num
     setDraft((current) => ({ ...current, [current.gift_type]: { ...current[current.gift_type], [key]: value } }));
     setNotice(''); setFields((current) => ({ ...current, [`details.${key}`]: '' }));
   }
+  function applyImport(next:GiftDraft,expected:string):boolean {
+    if (locked.current || JSON.stringify(draft)!==expected) return false;
+    setDraft(next);setNotice('');setFields({});
+    return true;
+  }
   async function upload(file: File): Promise<string | null> {
     if (locked.current || uploadRetryAt>Date.now()) return null;
     locked.current=true; setUploading(true); setUploadIssue(''); setNotice('');
@@ -54,7 +59,11 @@ export function useGiftEditor(participantId: string, slug: string, position: num
       setFields((current)=>({...current,image_path:'',image_url:''}));
       return path;
     } catch(error) {
-      if (mounted.current && error instanceof MediaUploadError && error.kind==='rate') setUploadRetryAt(Date.now()+Math.max(1,error.retryAfter)*1000);
+      if (mounted.current && error instanceof MediaUploadError && error.kind==='rate') {
+        // Publish the wait together with the failed upload, before the fieldset is
+        // unlocked. Waiting for an effect alone briefly re-enabled the selector.
+        setUploadRetryAt(Date.now()+Math.max(1,error.retryAfter)*1000);setUploadRateWaiting(true);
+      }
       if (mounted.current) setUploadIssue(error instanceof MediaUploadError && error.kind==='invalid'
         ? 'Elige una imagen JPEG, PNG o WebP estática de hasta 3 MiB y 16 megapíxeles.'
         : error instanceof MediaUploadError && error.kind==='access' ? 'Tu acceso ya no permite subir imágenes. La imagen anterior se conserva.'
@@ -105,5 +114,5 @@ export function useGiftEditor(participantId: string, slug: string, position: num
     setIssue(null); setFields({}); setLatest(undefined); setReviewError(false);
     setNotice(keepDraft ? 'Conservamos tu borrador. Revisa los datos antes de guardar sobre la versión actual.' : 'Cargamos los datos guardados actualmente.');
   }
-  return { base, draft, fields, issue, notice, busy: busy || uploading, uploading, uploadIssue, uploadRateWaiting, upload, dirty, needsReview, rateWaiting, reviewing, latest, reviewError, change, detail, save: () => perform(false), remove: () => perform(true), review, useLatest };
+  return { base, draft, fields, issue, notice, busy: busy || uploading, uploading, uploadIssue, uploadRateWaiting, upload, dirty, needsReview, rateWaiting, reviewing, latest, reviewError, change, detail, applyImport, save: () => perform(false), remove: () => perform(true), review, useLatest };
 }

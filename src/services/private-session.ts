@@ -5,13 +5,16 @@ import { PrivateAccessError, validatePrivateAccess } from './access-validation.t
 import type { GiftMutation } from '../domain/gift-editor.ts';
 import { GiftMutationError, sendGiftMutation } from './gift-mutations.ts';
 import { MediaUploadError, sendMediaUpload } from './media-upload.ts';
+import { ProductLookupError, sendProductImport } from './product-import.ts';
+import { ProfileMutationError,sendProfileMutation } from './profile-editor.ts';
+import type { ProfileMutation } from '../domain/profile-editor.ts';
 
 export type AccessState = { status: 'closed' } | { status: 'pending' | 'checking'; entryType: AccessType } |
   { status: 'ready'; entryType: AccessType; scope: AccessScope } |
   { status: 'unavailable'; entryType: AccessType } |
   { status: 'temporary'; entryType: AccessType; retryAt: number; rateLimited: boolean };
 type Validator = (token: string, participantId: string | undefined, signal: AbortSignal) => Promise<AccessScope>;
-export function createPrivateSession(validate: Validator = validatePrivateAccess, sendMutation: typeof sendGiftMutation = sendGiftMutation, sendUpload: typeof sendMediaUpload = sendMediaUpload) {
+export function createPrivateSession(validate: Validator = validatePrivateAccess, sendMutation: typeof sendGiftMutation = sendGiftMutation, sendUpload: typeof sendMediaUpload = sendMediaUpload, sendImport: typeof sendProductImport = sendProductImport, sendProfile:typeof sendProfileMutation=sendProfileMutation) {
   let credential: string | null = null;
   let kind: AccessType = 'participant';
   let state: AccessState = { status: 'closed' };
@@ -67,6 +70,33 @@ export function createPrivateSession(validate: Validator = validatePrivateAccess
   }
   return {
     begin, verify,
+    updateProfile: async (mutation:ProfileMutation,signal:AbortSignal) => {
+      if(!credential||state.status!=='ready'||!scopeCanEdit(state.scope,mutation.participant_id)||(state.scope.expiresAt&&Date.parse(state.scope.expiresAt)<=Date.now()))throw new ProfileMutationError('access');
+      const key=`profile:${mutation.participant_id}`;if(mutations.has(key))throw new ProfileMutationError('busy');
+      const controller=new AbortController();mutations.set(key,controller);
+      const combined=AbortSignal.any([signal,controller.signal]),currentIdentity=identity,secret=credential;
+      try {
+        const result=await sendProfile(secret,mutation,combined);
+        if(identity!==currentIdentity||combined.aborted)throw new ProfileMutationError('access');return result;
+      }catch(error){if(identity===currentIdentity&&!combined.aborted&&error instanceof ProfileMutationError&&error.kind==='access')unavailable();throw error;}
+      finally{if(mutations.get(key)===controller)mutations.delete(key);}
+    },
+    importProduct: async (participantId:string,url:string,signal:AbortSignal) => {
+      if (!credential || state.status!=='ready' || !scopeCanEdit(state.scope,participantId) || (state.scope.expiresAt&&Date.parse(state.scope.expiresAt)<=Date.now())) throw new ProductLookupError('access');
+      const key=`import:${participantId}`;
+      if (mutations.has(key)) throw new ProductLookupError('rate',1);
+      const controller=new AbortController();mutations.set(key,controller);
+      const currentIdentity=identity,secret=credential;
+      const combined=AbortSignal.any([signal,controller.signal]);
+      try {
+        const result=await sendImport(secret,participantId,url,combined);
+        if (identity!==currentIdentity || combined.aborted) throw new ProductLookupError('access');
+        return result;
+      } catch(error) {
+        if (identity===currentIdentity && !combined.aborted && error instanceof ProductLookupError && error.kind==='access') unavailable();
+        throw error;
+      } finally {if(mutations.get(key)===controller)mutations.delete(key);}
+    },
     upload: async (participantId: string, purpose: 'gift'|'avatar', file: Blob, signal: AbortSignal) => {
       if (!credential || state.status!=='ready' || !scopeCanEdit(state.scope,participantId) || (state.scope.expiresAt && Date.parse(state.scope.expiresAt)<=Date.now())) throw new MediaUploadError('access');
       const key=`upload:${participantId}:${purpose}`;

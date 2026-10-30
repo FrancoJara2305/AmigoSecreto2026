@@ -14,7 +14,9 @@ Preparación local de React/Vite y Supabase. **Sin vinculación ni despliegue re
 - T12: captura y limpieza de enlaces privados, permisos solo en memoria y rutas protegidas por rol/participante.
 - T13: editor manual de regalos con guardado independiente, detalles por tipo, limpieza y revisión de conflictos.
 - T14/T15: subida segura de imágenes, limpieza y cuotas atómicas por minuto/hora.
-- T16: servidor de importación con transporte HTTPS protegido y parser; selección de campos en la interfaz pendiente de T17. Ver [configuración y pruebas locales](docs/product-import.md).
+- T16: servidor de importación con transporte HTTPS protegido y parser. Ver [configuración y pruebas locales](docs/product-import.md).
+- T17: vista previa de sugerencias, fuentes, selección por campo y aplicación al borrador; solo Guardar persiste. Ver [uso y ensayo completo local](docs/product-import-ui.md).
+- T18: edición privada de foto/ilustración, mensaje y gustos, con versiones y conservación del borrador. Ver [formulario y pruebas locales](docs/profile-editor.md).
 
 Requiere Node 24+ y npm. Para comprobar sin Docker ni credenciales:
 

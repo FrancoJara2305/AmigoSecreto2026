@@ -13,7 +13,7 @@ Se mantienen los límites iniciales de T07/T08 y el límite de ráfaga de T14. T
 | Reserva de subida | 120 | 6 | **10** |
 | Importación, operación autorizada T16 | 60 | 5 | 30 |
 
-T16 invoca estas cuotas dentro de una operación autorizada antes de conectar con una tienda. La configuración predeterminada sin transporte falla cerrada; la selección de sugerencias en la interfaz sigue en T17. Ver [importación de productos](product-import.md).
+T16 invoca estas cuotas dentro de una operación autorizada antes de conectar con una tienda. La configuración predeterminada sin transporte falla cerrada. [T17](product-import-ui.md) integra selección de sugerencias y respeta la espera sin bloquear la edición o guardado manual. Ver [servidor de importación](product-import.md).
 
 Los POST que llegan a `wishlist-api` y `media-upload` comparten además un límite de entrada de **600/minuto**, anterior a la lectura del cuerpo. Si hay una identidad de red verificada, se aplican 120 POST/minuto por esa identidad. Veinte respuestas 401/403 por minuto bloquean temporalmente esa red. Sin identidad verificable, se ignoran las cabeceras IP y se aplica la barrera global de 120 fallos/minuto. Una cuota de imágenes no revoca el enlace ni impide editar otros datos.
 
