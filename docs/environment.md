@@ -60,8 +60,12 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'
 
 Configura Edge con el proxy local y `APP_LOCAL_FETCH_PROXY=1`; deja `RATE_LIMIT_IP_SOURCE=off`. En terminales separadas ejecuta `npm.cmd run fetch-proxy:local` y la función con tu archivo Edge. El proxy escucha en 54801, accesible desde Docker Desktop; toda descarga sigue exigiendo firma y nonce SQL antes de DNS/TLS. La UI importa sugerencias al borrador; únicamente Guardar persiste. No es necesario habilitarlo para editar manualmente.
 
-## Entornos alojados pendientes
+## Entornos alojados
 
 Staging y producción deberán tener proyectos, claves y orígenes propios. En Vercel frontend solo van las tres variables públicas. El adaptador Node necesita el HMAC y el callback HTTPS **de ese mismo entorno**; Edge necesita la URL HTTPS del adaptador y el HMAC correspondiente, con `APP_LOCAL_FETCH_PROXY=0`. No permitir previews arbitrarias contra producción ni copiar dominios de staging a su CORS. La validación de cabecera IP sigue pendiente antes de activar otro modo.
 
-Todavía no se han cargado secretos, vinculado proyectos o desplegado. Preparación y aprobación por destino: [despliegue](deployment-review.md). No hay contraseñas por defecto ni usuarios Auth que crear.
+`prepare:deployment` genera `frontend.env.example`, `edge.env.example` y `fetch-proxy.env.example` bajo `artifacts/deployment/<entorno>/`, con los orígenes indicados y solo marcadores para claves. El generador no lee ni carga secretos. Confirmar el destino antes de sustituir marcadores por el canal seguro. La [revisión de staging](staging-review.md) identifica los proyectos y el inventario aplicado.
+
+**Staging ya está configurado y publicado:** [resultado y acceso seguro](staging-deployment-result.md). Vercel staging tiene cinco variables en su entorno Production (las tres públicas, callback y HMAC Sensitive); ese nombre de entorno pertenece al proyecto staging separado. Edge tiene siete variables de aplicación, CORS/base URL canónicos, callback al mismo Supabase, HMAC nuevos, `RATE_LIMIT_IP_SOURCE=off` y `APP_LOCAL_FETCH_PROXY=0`. No se añadieron claves service_role/DB o capacidades privadas a Vercel. Las claves de servidor del runtime Supabase siguen inyectadas por la plataforma.
+
+Contraseña DB, HMAC y acceso inicial del organizador se conservan cifrados con DPAPI CurrentUser bajo `artifacts/deployment/staging/`, excluido de Git/subidas. El helper `open-organizer.ps1` abre el acceso sin imprimirlo; depende de este usuario/equipo. `.env.local` y los entornos del usuario no cambiaron; no hay link en la raíz. Producción mantiene sus proyectos/credenciales independientes y no se modificó.

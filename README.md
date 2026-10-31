@@ -88,9 +88,9 @@ Si perdiste el enlace, npm.cmd run organizer:bootstrap -- --recover --app-url ht
 | Migraciones locales y revisión previa a vincular | [Integración Supabase](docs/supabase-integration.md) |
 | Arranque, limpieza, errores y aceptación manual | [Operación](docs/operations.md) |
 | DB y Storage, exportación/restauración y accesos | [Respaldos](docs/backup-recovery.md) |
-| Staging/producción y rollback, sin ejecución remota | [Despliegue](docs/deployment-review.md) |
+| Estado de staging/producción y rollback | [Despliegue](docs/deployment-review.md) |
 | Configuración, manifiesto SHA-256 y ensayo local de hosting | [Paquete T25](docs/deployment-package.md) |
 | Evidencia y comprobaciones | [Seguridad](docs/security-review.md), [rendimiento](docs/performance-review.md), [resultados](docs/validation-results.md) |
-| Estado y lector de pantalla pendiente | [Avance](docs/implementation-progress.md), [accesibilidad](docs/accessibility-review.md) |
+| Estado y validación con lector de pantalla | [Avance](docs/implementation-progress.md), [accesibilidad](docs/accessibility-review.md) |
 
-T25 prepara el paquete local de despliegue; rutas/CSP pasaron en tres motores con datos sintéticos. AmigoSecreto2026 se reserva para producción y el staging separado sigue pendiente de creación y acceso. Faltan lector real de T21 y aceptación de dominio/rutas/CORS/transporte/respaldo en infraestructura alojada. **No ejecutar operaciones sobre la base remota, reset, push o despliegue sin revisar y aprobar el destino y los cambios concretos.** Los ejemplos no contienen credenciales reales; .env.local, artefactos y respaldos no se versionan. Comandos y límites: [paquete T25](docs/deployment-package.md).
+**T25: [staging publicado](https://amigo-secreto2026-staging.vercel.app)**, separado de producción, con 14 migraciones verificadas y tres Edge activas. Confirmación visible y subida durante revalidación corregidas, con 141 casos UI y ensayo alojado de archivos/URLs/importación; [seguimiento](docs/staging-feedback-result.md). **Recorrido guiado T21 validado por el usuario y [logs Supabase revisados](docs/staging-logs-review.md).** [Acceso seguro](docs/staging-deployment-result.md). Datos del usuario conservados; producción sin consulta SQL/cambios. [Inspección productiva de solo lectura preparada](docs/production-review.md), antes de revisar pendientes/recuperación y aprobar promoción. `.env.local`, artefactos y respaldos no se versionan.

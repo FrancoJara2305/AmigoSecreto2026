@@ -1,6 +1,6 @@
 # Integración Supabase y revisión de migraciones
 
-Estado actual: aplicación y backend probados en local, con paquete local de T25 preparado. El usuario confirmó AmigoSecreto2026 para producción y staging separado pendiente; **no se consultó ni vinculó esa base**. El avance detallado está en [tareas](implementation-progress.md), el [paquete T25](deployment-package.md) y los ensayos en [validación](validation-results.md).
+Estado actual al 2026-10-31: **staging publicado y comprobado**, con las 14 migraciones aplicadas/verificadas, cero pendientes y tres Edge activas en `eknnkmndfxgyjsdgkwkh`. La [publicación](staging-deployment-result.md) registra API limitada a public, signup/acceso anónimo desactivados, cero usuarios Auth/relaciones Realtime, secretos propios y acceso inicial del organizador cifrado. Se conservaron dos participantes, un regalo y una imagen sintéticos; accesos personales de prueba revocados. [Recuperación inicial](staging-migration-result.md). AmigoSecreto2026 (`jtuhcilcnuydsbcbsazo`) es producción, sin consulta SQL/cambios. Repositorio sin link; lector guiado T21 validado por el usuario y [logs Supabase revisados](staging-logs-review.md); [inspección productiva preparada](production-review.md) y promoción pendientes. Avance: [tareas](implementation-progress.md), [paquete](deployment-package.md) y [validación](validation-results.md).
 
 ## Arquitectura aplicada
 
@@ -64,4 +64,4 @@ Comparar el historial con los archivos revisados, examinar SQL y probar el mismo
 
 DB y bytes de Storage se exportan por separado y se validan conjuntamente. Los secretos, roles administrados y configuración de proveedor no se recuperan con un dump de tablas. Un snapshot puede reactivar hashes de enlaces posteriormente revocados: [recuperación](backup-recovery.md) invalida los accesos antes de reabrir.
 
-Se comprobaron en local lectura/escritura acotadas, concurrencia, Edge/Storage, recuperación y rendimiento. Siguen pendientes el lector real de T21 y rutas/CSP/CORS/logs/transporte/tiendas/métricas de infraestructura alojada. Estos límites no se dan por verificados mediante el estado Healthy de PostgreSQL.
+Se comprobaron en local lectura/escritura acotadas, concurrencia, Edge/Storage, recuperación y rendimiento. La aceptación alojada de rutas/CSP/CORS/transporte/tienda y el recorrido guiado con lector T21 ya se registraron en el [seguimiento](staging-feedback-result.md); los [logs Supabase ya se revisaron](staging-logs-review.md) y queda la [revisión productiva](production-review.md). Estos límites no se dan por verificados mediante el estado Healthy de PostgreSQL.

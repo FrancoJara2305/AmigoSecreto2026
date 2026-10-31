@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { resolve,sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { hostingConfig,deploymentOrigin } from '../server/deployment-config.ts';
+import { hostingConfig,deploymentOrigin,deploymentEnvironmentTemplates } from '../server/deployment-config.ts';
 
 // Produces review artifacts only. Never logs in, links, reads a remote or deploys.
 const args=process.argv.slice(2),options={};
@@ -20,10 +20,15 @@ const files=[...new Set(git.stdout.split('\0').filter((name)=>name&&(
 const digest=(bytes)=>createHash('sha256').update(bytes).digest('hex');
 const entries=await Promise.all(files.map(async(path)=>({path,sha256:digest(await readFile(path))})));
 const config=JSON.stringify(hostingConfig(supabase),null,2)+'\n';
-const manifest={stage,appOrigin:app,supabaseOrigin:supabase,deployed:false,remoteInspected:false,
+const templates=deploymentEnvironmentTemplates(supabase,app);
+const manifest={schemaVersion:2,stage,appOrigin:app,supabaseOrigin:supabase,deployed:false,remoteInspected:false,
+  destinationStatus:'unverified',migrationPlanStatus:'inventory-only',
   migrations:entries.filter((e)=>e.path.startsWith('supabase/migrations/')),files:entries,hostingConfigSha256:digest(config),
+  environmentTemplates:Object.entries(templates).map(([path,content])=>({path,sha256:digest(content)})),
   contentSha256:digest(JSON.stringify(entries)),notes:['Migration list is an inventory, not a remote pending list.','No seeds, participants or credential files included.','Review Supabase history and exact destination before any remote operation.']};
 await mkdir(directory,{recursive:true});await writeFile(resolve(directory,'vercel.json'),config);
+for(const [path,content] of Object.entries(templates))await writeFile(resolve(directory,path),content);
 await writeFile(resolve(directory,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(`Paquete de revisión ${stage}: ${entries.length} archivos y ${manifest.migrations.length} migraciones inventariados en artifacts/deployment/${stage}.`);
-console.log('CSP ligada al origen elegido. Sin claves, archivos de entorno, conexión remota o despliegue.');
+console.log('CSP y tres plantillas de variables ligadas a los orígenes elegidos; solo marcadores, sin claves reales.');
+console.log('Destino sin verificar; inventario, no lista de pendientes. Sin conexión remota o despliegue.');

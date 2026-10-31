@@ -2,6 +2,8 @@
 
 Medición local del 30 de octubre de 2026 (America/Lima), con datos sintéticos. Se cumplieron los presupuestos del plan en las muestras finales: LCP ≤ 2500 ms, CLS ≤ 0,1 y JavaScript público inicial ≤ 200 000 bytes gzip. Son resultados de laboratorio, no métricas de visitantes de producción.
 
+El 2026-10-31 se repitieron 16 navegaciones contra el staging alojado, también dentro de presupuesto; [resultados y condiciones](staging-deployment-result.md). Usaron dos participantes y un regalo sintéticos, sin imagen de producto: no son el mismo conjunto representativo de esta medición local ni permiten comparar una mejora de rendimiento entre ambas.
+
 ## Resultado antes y después
 
 P75 calculado por rango más próximo sobre cinco navegaciones móviles y tres de escritorio por ruta. Cada navegación usa un contexto nuevo, caché desactivada y build de producción; se cuentan todos los scripts descargados por la ruta, incluidos sus módulos públicos diferidos.

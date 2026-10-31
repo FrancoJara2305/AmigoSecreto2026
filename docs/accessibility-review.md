@@ -48,9 +48,15 @@ npm.cmd run build
 
 Las capturas, métricas de zoom/contraste, árboles ARIA y perfiles temporales quedan bajo `artifacts/a11y/`; son datos sintéticos locales, no un export del proyecto real. El puerto 4173 y la API temporal 4174 deben estar libres. No ejecutes en paralelo dos comandos que usen la misma previsualización.
 
-## Revisión con lector real: pendiente
+## Revisión con lector real: validada por el usuario
 
-Al iniciar T25, el usuario aclaró que «funciona» significaba **«Solo se abrió la ventana»**. Se confirma el arranque de la superficie de prueba, sin dar por aprobado el recorrido con lector. El criterio manual permanece pendiente.
+Resultado manual del 2026-10-31 (America/Lima): el usuario informó que realizó el recorrido guiado y todo funcionó salvo el control de carga de imagen anunciado como deshabilitado. Después confirmó que estaba creando un participante nuevo. Ese bloqueo es el previsto hasta pulsar Crear participante, con explicación asociada; el caso queda aclarado. **Se cierra el recorrido guiado con lector de T21 por reporte del usuario.** El recorrido incluyó navegación por controles, guardado y anuncio, error de validación y diálogo con teclado. Lector/versión y navegador no quedaron identificados; no se atribuye una auditoría exhaustiva o compatibilidad con todos los lectores.
+
+Comprobación alojada posterior, sin seleccionar archivos o guardar datos: en un perfil existente el selector nativo abrió y el árbol de accesibilidad indicó `disabled=false`; en un participante nuevo sin guardar indicó deshabilitado con la explicación «Primero crea el participante; después podrás subir un archivo». Evidencia: `artifacts/t25-feedback/picker-state.json`. Es una comprobación de estado y apertura del selector, no una sustitución del resultado manual con lector.
+
+Seguimiento T25: perfil/regalo/administración muestran ahora la confirmación de guardado dentro de la ventana, con `role=status`, `aria-atomic` y botón para ocultarla. Pasaron 141 casos de navegador en tres resoluciones y se revisaron capturas alojadas; [resultado](staging-feedback-result.md). La validación manual procede del reporte posterior del usuario, no de esas pruebas automáticas.
+
+Al iniciar T25, el usuario aclaró que «funciona» significaba **«Solo se abrió la ventana»**. Ese primer intento solo confirmó el arranque de la superficie de prueba y dejó pendiente el lector. El resultado posterior que cierra el recorrido acordado se registra arriba.
 
 Se preparó una superficie interactiva aislada para completar esta revisión sin abrir enlaces reales ni modificar participantes:
 

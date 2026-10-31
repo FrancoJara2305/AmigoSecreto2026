@@ -6,7 +6,7 @@ import type { EditableProfile } from '../../domain/profile-editor';
 import { useProfileEditor } from '../../hooks/useProfileEditor';
 import { usePrivateAccess } from '../../app/PrivateAccessProvider';
 import { Button } from '../ui/Button';
-import { Notice,ErrorSummary } from '../ui/Feedback';
+import { Notice,ErrorSummary,SaveFeedback } from '../ui/Feedback';
 import { TextAreaField } from '../ui/Fields';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 import { ParticipantAvatar } from '../participants/ParticipantAvatar';
@@ -29,7 +29,7 @@ export function ProfileEditor({initial,canWrite}:{initial:EditableProfile;canWri
   return <section className="gift-editor profile-editor"><div className="editor-navigation"><Link className="text-link" to={`/participante/${editor.base.slug}`}><ArrowLeft aria-hidden="true"/>Volver a la lista</Link><Button variant="quiet" disabled={editor.busy} onClick={()=>editor.dirty?setConfirm('close'):close()}>Cerrar acceso de edición</Button></div>
     <header className="editor-heading"><p className="eyebrow">UN POQUITO MÁS SOBRE TI</p><h1 ref={heading} tabIndex={-1}>El perfil de {editor.base.name}</h1><p>Tu foto, mensaje y gustos acompañan las tres ideas de tu lista. El organizador puede corregir tu nombre.</p></header>
     {!canWrite&&<div className="editor-access-notice"><Notice title={access.status==='checking'?'Comprobando tu acceso…':'La edición está en pausa'} live>Conservamos tu borrador en esta pestaña. Necesitas un acceso válido para guardar.</Notice>{access.status==='temporary'&&<Button variant="secondary" disabled={accessWaiting} onClick={()=>{void verify(initial.id);}}>Volver a comprobar acceso</Button>}</div>}
-    <div id="profile-feedback" tabIndex={-1} className="editor-feedback">{editor.notice&&<Notice title="Un paso más cerca" tone="success" live>{editor.notice}</Notice>}{editor.issue&&<Notice title={editor.needsReview?'Revisemos el perfil guardado':'No pudimos guardar el perfil'} tone="error" live>{issue}</Notice>}</div>
+    <SaveFeedback message={editor.notice}/><div id="profile-feedback" tabIndex={-1} className="editor-feedback">{editor.issue&&<Notice title={editor.needsReview?'Revisemos el perfil guardado':'No pudimos guardar el perfil'} tone="error" live>{issue}</Notice>}</div>
     {editor.needsReview&&<section className="editor-review" aria-labelledby="profile-review-title"><h2 id="profile-review-title">Tu borrador sigue aquí</h2><Button variant="secondary" icon={<RotateCcw/>} loading={editor.reviewing} onClick={()=>{void editor.review();}}>Revisar versión actual</Button>
       {editor.reviewError&&<p role="alert">No pudimos consultar el perfil guardado. Puedes intentarlo otra vez sin perder tu borrador.</p>}
       {editor.latest===null&&<p role="alert">Este participante ya no está disponible. Conservamos tu borrador, pero no se puede guardar.</p>}

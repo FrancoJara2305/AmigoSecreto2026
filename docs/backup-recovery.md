@@ -1,6 +1,8 @@
 # Respaldo y recuperación
 
-Procedimiento operativo preparado en T24 y ensayado solo con datos sintéticos. **No se ha exportado ni restaurado tu instancia principal o remota.** La prueba no acepta URLs, rutas de entrada, credenciales o referencias de proyecto arbitrarias.
+Procedimiento operativo preparado en T24 con datos sintéticos. En T25 se exportó el baseline vacío de **staging** y se verificó su restauración lógica en una instancia local aislada; [alcance y límites](staging-migration-result.md). **No se ha exportado/restaurado producción ni ejecutado una restauración alojada.** El ensayo automatizado T24 no acepta URLs, rutas de entrada, credenciales o referencias arbitrarias.
+
+El baseline T25 se conserva cifrado con DPAPI en `backups/staging/20261031-initial/`, junto con manifiesto, catálogo y suplemento `restore-public-acl.sql`. El recorrido pg_dump/pg_restore necesitó reponer el PUBLIC USAGE observado para igualar el ACL de esquema; se verificaron también los seis DEFAULT ACL públicos. El ensayo usó PG18 local para origen PG17, sin Docker ni la pila principal; terminó con el servidor detenido. No hay copia externa y el cifrado requiere este usuario/equipo Windows. Este baseline limitado a la app vacía no reemplaza los backups completos DB+Storage y restauración alojada que requerirá producción.
 
 ## Qué conservar
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deploymentOrigin,hostingConfig,spaSource } from '../../server/deployment-config.ts';
+import { deploymentOrigin,deploymentEnvironmentTemplates,hostingConfig,spaSource } from '../../server/deployment-config.ts';
 
 test('SPA fallback excludes APIs, assets and missing file paths, including nested routes',()=>{
   const pattern=new RegExp('^'+spaSource+'$');
@@ -21,4 +21,33 @@ test('hosting config uses exact HTTPS backend, protected documents and immutable
 test('deployment destinations reject URL credentials, local/IP targets, query, path and header injection',()=>{
   for(const value of ['http://example.com','https://localhost','https://127.0.0.1','https://[::1]','https://user:pass@example.com','https://example.com:444','https://example.com/path','https://example.com?q=x','https://example.com/#token=x','https://*.supabase.co','https://example.com\r\nX-Test: yes'])assert.throws(()=>deploymentOrigin(value));
   assert.equal(deploymentOrigin('https://fixture.supabase.co/'),'https://fixture.supabase.co');
+});
+
+test('environment templates bind frontend, Edge and signed callback to the same destinations',()=>{
+  const templates=deploymentEnvironmentTemplates('https://staging-fixture.supabase.co/','https://staging.example.com/');
+  const env=(name:keyof typeof templates)=>Object.fromEntries(templates[name].trim().split('\n').map((line)=>line.split('=')));
+  assert.deepEqual(env('frontend.env.example'),{
+    VITE_SUPABASE_URL:'https://staging-fixture.supabase.co',
+    VITE_SUPABASE_PUBLISHABLE_KEY:'REPLACE_PUBLIC_KEY_FROM_THIS_ENVIRONMENT',
+    VITE_APP_URL:'https://staging.example.com',
+  });
+  assert.deepEqual(env('edge.env.example'),{
+    APP_ALLOWED_ORIGINS:'https://staging.example.com',APP_BASE_URL:'https://staging.example.com',
+    RATE_LIMIT_IP_SOURCE:'off',RATE_LIMIT_HMAC_SECRET:'REPLACE_UNUSED_WHILE_IP_SOURCE_OFF',
+    FETCH_PROXY_URL:'https://staging.example.com/api/fetch-product',
+    FETCH_PROXY_HMAC_SECRET:'REPLACE_UNIQUE_32_BYTE_BASE64URL_SHARED_WITH_PROXY',APP_LOCAL_FETCH_PROXY:'0',
+  });
+  assert.deepEqual(env('fetch-proxy.env.example'),{
+    FETCH_PROXY_HMAC_SECRET:env('edge.env.example').FETCH_PROXY_HMAC_SECRET,
+    FETCH_PROXY_CALLBACK_URL:'https://staging-fixture.supabase.co/functions/v1/product-metadata',
+  });
+});
+
+test('environment templates reject mixed URL configuration and keep private variables out of frontend',()=>{
+  assert.throws(()=>deploymentEnvironmentTemplates('https://same.example.com','https://same.example.com'));
+  assert.throws(()=>deploymentEnvironmentTemplates('http://127.0.0.1:54321','https://staging.example.com'));
+  assert.throws(()=>deploymentEnvironmentTemplates('https://fixture.supabase.co','https://staging.example.com/#secret'));
+  const templates=deploymentEnvironmentTemplates('https://fixture.supabase.co','https://staging.example.com');
+  assert.doesNotMatch(templates['frontend.env.example'],/SECRET|SERVICE_ROLE|PASSWORD|CALLBACK/);
+  for(const content of Object.values(templates))assert.doesNotMatch(content,/SUPABASE_SERVICE_ROLE_KEY|SUPABASE_ACCESS_TOKEN|SUPABASE_DB_PASSWORD/);
 });

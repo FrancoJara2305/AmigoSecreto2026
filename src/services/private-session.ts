@@ -71,6 +71,13 @@ export function createPrivateSession(validate: Validator = validatePrivateAccess
     pending = { promise, participantId };
     return promise;
   }
+  async function settleVerification(expectedIdentity: number) {
+    while (identity === expectedIdentity && state.status === 'checking' && pending) {
+      const current = pending;
+      await current.promise;
+      if (pending === current) break;
+    }
+  }
   return {
     begin, verify,
     admin: async (operation:AdminRequest,signal:AbortSignal) => {
@@ -122,6 +129,11 @@ export function createPrivateSession(validate: Validator = validatePrivateAccess
       } finally {if(mutations.get(key)===controller)mutations.delete(key);}
     },
     upload: async (participantId: string, purpose: 'gift'|'avatar', file: Blob, signal: AbortSignal) => {
+      // Returning from the file picker can trigger focus validation before its change event.
+      // Wait for that validation without carrying an upload into a replacement session.
+      const selectionIdentity = identity;
+      await settleVerification(selectionIdentity);
+      if (identity !== selectionIdentity || signal.aborted) throw new MediaUploadError('access');
       if (!credential || state.status!=='ready' || !scopeCanEdit(state.scope,participantId) || (state.scope.expiresAt && Date.parse(state.scope.expiresAt)<=Date.now())) throw new MediaUploadError('access');
       const key=`upload:${participantId}:${purpose}`;
       if (mutations.has(key)) throw new MediaUploadError('rate');

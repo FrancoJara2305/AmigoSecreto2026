@@ -1,15 +1,29 @@
 import { test,expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { mkdir } from 'node:fs/promises';
+import { mkdir,readFile } from 'node:fs/promises';
 import { profileEditorFixture,sampleProfile,openProfileEditor } from './fixtures/profile-editor';
 import { fixtureCredential,fixtureOwner } from './fixtures/gift-editor';
 const png=new URL('../fixtures/images/small.png',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1');
 const photo= (page:import('@playwright/test').Page)=>page.getByRole('img',{name:'Vista previa de foto o ilustración'});
 
+for(const organizer of [false,true])test(`file picker focus revalidation keeps ${organizer?'organizer':'personal'} photo upload and draft`,async({page})=>{
+  const {state}=await profileEditorFixture(page,sampleProfile(),organizer);
+  if(organizer){await page.goto(`/organizador/acceso#token=${fixtureCredential}`);await page.getByRole('link',{name:'Ver y editar lista de Melyza',exact:true}).click();await page.getByRole('link',{name:'Editar perfil',exact:true}).click();await expect(page.getByLabel('Mensaje personal',{exact:true})).toBeEnabled();}
+  else await openProfileEditor(page);
+  await page.getByLabel('Mensaje personal',{exact:true}).fill('Conservar mientras comprueba');state.validationDelay=500;
+  const bytes=Array.from(await readFile(png));
+  await page.evaluate((bytes)=>{const input=document.getElementById('profile-photo_path') as HTMLInputElement;const files=new DataTransfer();files.items.add(new File([new Uint8Array(bytes)],'photo.png',{type:'image/png'}));input.files=files.files;window.dispatchEvent(new Event('focus'));input.dispatchEvent(new Event('change',{bubbles:true}));},bytes);
+  await expect(photo(page).locator('img')).toBeVisible();expect(state.uploads).toEqual(['avatar']);
+  await expect(page.getByText('Tu acceso ya no permite subir fotos.',{exact:false})).toHaveCount(0);await expect(page.getByLabel('Mensaje personal',{exact:true})).toHaveValue('Conservar mientras comprueba');
+  await page.getByRole('button',{name:'Guardar perfil',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Tu perfil quedó guardado.'})).toBeInViewport();expect(state.profile.photo_path).not.toBeNull();
+});
+
 test('profile saves only editable fields and exact version, then public profile reflects message/preferences without changing gifts',async({page})=>{
   const {state,gifts}=await profileEditorFixture(page);await openProfileEditor(page);
   await expect(page.getByRole('textbox',{name:'Nombre',exact:true})).toHaveCount(0);await page.getByLabel('Mensaje personal',{exact:true}).fill('  ¡Me encantan las sorpresas!  ');await page.getByLabel('Gustos y consideraciones generales',{exact:true}).fill('Prefiero colores verdes. Evitar lana.');await page.getByRole('radio',{name:'Reno',exact:true}).check();
   expect(state.writes).toHaveLength(0);await page.getByRole('button',{name:'Guardar perfil',exact:true}).click();await expect(page.getByText('Tu perfil quedó guardado. Tus regalos se mantienen.')).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Tu perfil quedó guardado.'})).toBeInViewport();
+  await page.getByRole('button',{name:'Ocultar confirmación',exact:true}).click();await expect(page.getByText('Tu perfil quedó guardado. Tus regalos se mantienen.')).toHaveCount(0);
   expect(state.writes).toHaveLength(1);expect(state.writes[0].expected_version).toBe(1);expect(state.profile.version).toBe(2);expect(state.profile.avatar_key).toBe('reindeer');expect(gifts.gifts[0].title).toBe('Una idea guardada');
   await page.getByRole('link',{name:'Volver a la lista',exact:true}).click();await expect(page.getByText('¡Me encantan las sorpresas!',{exact:true})).toBeVisible();await expect(page.getByText('Prefiero colores verdes. Evitar lana.',{exact:true})).toBeVisible();await expect(page.getByText('Una idea guardada',{exact:true})).toBeVisible();
   await page.reload();await expect(page.getByText('Prefiero colores verdes. Evitar lana.',{exact:true})).toBeVisible();await expect(page.getByRole('link',{name:'Editar mi perfil',exact:true})).toHaveCount(0);

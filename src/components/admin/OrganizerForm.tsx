@@ -10,7 +10,7 @@ import { validateAdmin,suggestParticipantSlug } from '../../../supabase/function
 import { AdminHeader,AdminIssue } from './AdminShared';
 import { Button } from '../ui/Button';
 import { TextField,TextAreaField } from '../ui/Fields';
-import { LoadingState,Notice,ErrorSummary } from '../ui/Feedback';
+import { LoadingState,Notice,ErrorSummary,SaveFeedback } from '../ui/Feedback';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 import { ProfilePhotoField } from '../editor/ProfilePhotoField';
 
@@ -82,7 +82,7 @@ function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|
   const photoErrors=Object.fromEntries(Object.entries(fields).map(([key,value])=>[key.replace('participant.',''),value]));
   return <><AdminHeader title={title} dirty={dirty} busy={busy}/>
     {location.state?.created&&<Notice title="Participante añadido" tone="success">Su lista empieza vacía. Ya puedes subir una foto, preparar sus ideas o emitir su enlace desde Participantes.</Notice>}
-    {notice&&<Notice title="Listo" tone="success" live>{notice}</Notice>}<AdminIssue issue={op.issue}/><AdminIssue issue={reviewOp.issue}/>
+    <SaveFeedback message={notice}/><AdminIssue issue={op.issue}/><AdminIssue issue={reviewOp.issue}/>
     {needsReview&&<section className="admin-review" aria-labelledby="admin-review-title"><h2 id="admin-review-title">Tu borrador sigue aquí</h2><p>Comparar no guarda nada. Consulta los datos actuales antes de decidir.</p><Button disabled={!canWrite||busy||op.waiting||reviewOp.waiting} onClick={()=>{void review();}}>Revisar datos guardados</Button>{reviewError&&<p role="alert">No pudimos consultar los datos guardados. Puedes intentarlo otra vez sin perder tu borrador.</p>}
       {latest===null&&<p>{creating?'No hay un alta guardada con este identificador.':'Este participante ya no está disponible. Conservamos tu borrador.'}</p>}
       {latest&&<><h3>Guardado actualmente</h3><dl>{Object.entries(toDraft(latest)).filter(([key])=>mode==='event'?['title','welcome_message','exchange_date'].includes(key):['name','slug','display_order'].includes(key)).map(([key,value])=><div key={key}><dt>{{name:'Nombre',slug:'Slug',display_order:'Orden',title:'Título',welcome_message:'Bienvenida',exchange_date:'Fecha'}[key]}</dt><dd>{String(value)||'Sin completar'}</dd></div>)}</dl>{'person' in latest&&<><p>Mensaje: {latest.person.personal_message||'Sin mensaje'}</p><p>Gustos: {latest.person.general_preferences||'Sin preferencias'}</p><p>Foto: {latest.person.photo_path||latest.person.photo_url||`Ilustración ${latest.person.avatar_key}`}</p></>}

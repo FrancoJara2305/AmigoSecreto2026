@@ -101,3 +101,32 @@ test('rate limit disables premature retries without issuing another request', as
   if (state.status === 'temporary') { assert.equal(state.rateLimited, true); assert.ok(state.retryAt > Date.now()); }
   await session.verify(); assert.equal(requests, 1);
 });
+
+test('file selection waits for focus revalidation before uploading with the same capability', async (t) => {
+  let release!: (scope: AccessScope) => void;
+  let checks = 0, uploads = 0;
+  const session = createPrivateSession(async () => ++checks === 1 ? scope : new Promise<AccessScope>((resolve) => { release = resolve; }), undefined,
+    async () => { uploads++; return 'uploaded.webp'; });
+  t.after(() => session.close());
+  session.begin(token, 'participant'); await session.verify();
+  const verification = session.verify(); await Promise.resolve();
+  const upload = session.upload(owner, 'avatar', new Blob(), new AbortController().signal);
+  assert.equal(uploads, 0); release(scope); await verification;
+  assert.equal(await upload, 'uploaded.webp'); assert.equal(uploads, 1);
+});
+
+test('file selection never uploads when focus revalidation denies or changes the capability', async (t) => {
+  for (const changed of [false, true]) {
+    let release!: (scope: AccessScope) => void;
+    let checks = 0, uploads = 0;
+    const session = createPrivateSession(async () => ++checks === 1 ? scope : new Promise<AccessScope>((resolve) => { release = resolve; }), undefined,
+      async () => { uploads++; return 'must-not-upload.webp'; });
+    t.after(() => session.close()); session.begin(token, 'participant'); await session.verify();
+    const verification = session.verify(); await Promise.resolve();
+    const upload = session.upload(owner, 'avatar', new Blob(), new AbortController().signal);
+    const rejected = assert.rejects(upload, (error: unknown) => error instanceof Error && 'kind' in error && error.kind === 'access');
+    if (changed) session.begin('B'.repeat(43), 'participant');
+    release(changed ? scope : { ...scope, expiresAt: new Date(Date.now() - 1000).toISOString() });
+    await verification; await rejected; assert.equal(uploads, 0);
+  }
+});

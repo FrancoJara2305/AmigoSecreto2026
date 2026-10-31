@@ -42,6 +42,9 @@ textarea.field__control { min-height: 108px; resize: vertical; }
 .notice__title { display: block; font-weight: 600; margin-bottom: .15rem; }
 .notice--error { background: #fcf0ed; border-color: #c6898b; color: #8c2433; }
 .notice--info { background: #f7f0df; border-color: #cdb683; color: var(--ink); }
+.save-feedback { position: fixed; z-index: 50; inset-inline-end: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); max-width: min(28rem, calc(100vw - 2rem)); box-shadow: 0 8px 30px #173e3233; align-items: center; }
+.save-feedback > svg { flex-shrink: 0; }
+.save-feedback__close { flex: 0 0 auto; padding: .5rem; margin: -.25rem; }
 .error-summary { margin-bottom: 1rem; }
 .error-summary ul { margin: .4rem 0 0; padding-left: 1rem; }
 .error-summary button { color: inherit; text-align: left; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }

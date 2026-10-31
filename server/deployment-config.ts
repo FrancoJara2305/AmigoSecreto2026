@@ -10,6 +10,29 @@ export function deploymentOrigin(value:string):string {
     throw new Error('El destino debe ser un origen HTTPS sin credenciales, rutas, comodines o loopback.');
   return url.origin;
 }
+// Review templates only: no environment reads, credentials or provider calls.
+export function deploymentEnvironmentTemplates(supabaseUrl:string,appUrl:string){
+  const supabase=deploymentOrigin(supabaseUrl),app=deploymentOrigin(appUrl);
+  if(supabase===app)throw new Error('Frontend y Supabase deben ser destinos distintos.');
+  return {
+    'frontend.env.example':[
+      `VITE_SUPABASE_URL=${supabase}`,
+      'VITE_SUPABASE_PUBLISHABLE_KEY=REPLACE_PUBLIC_KEY_FROM_THIS_ENVIRONMENT',
+      `VITE_APP_URL=${app}`,
+    ].join('\n')+'\n',
+    'edge.env.example':[
+      `APP_ALLOWED_ORIGINS=${app}`,`APP_BASE_URL=${app}`,
+      'RATE_LIMIT_IP_SOURCE=off','RATE_LIMIT_HMAC_SECRET=REPLACE_UNUSED_WHILE_IP_SOURCE_OFF',
+      `FETCH_PROXY_URL=${app}/api/fetch-product`,
+      'FETCH_PROXY_HMAC_SECRET=REPLACE_UNIQUE_32_BYTE_BASE64URL_SHARED_WITH_PROXY',
+      'APP_LOCAL_FETCH_PROXY=0',
+    ].join('\n')+'\n',
+    'fetch-proxy.env.example':[
+      'FETCH_PROXY_HMAC_SECRET=REPLACE_UNIQUE_32_BYTE_BASE64URL_SHARED_WITH_PROXY',
+      `FETCH_PROXY_CALLBACK_URL=${supabase}/functions/v1/product-metadata`,
+    ].join('\n')+'\n',
+  };
+}
 export function hostingConfig(supabaseUrl:string){
   const origin=deploymentOrigin(supabaseUrl);
   const csp=["default-src 'none'","script-src 'self'","style-src 'self'","style-src-attr 'unsafe-inline'",

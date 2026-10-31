@@ -1,25 +1,32 @@
 # T25: paquete local para revisar el despliegue
 
-T25 está **en preparación; no desplegado**. El usuario confirmó que Supabase **AmigoSecreto2026 se reserva para producción** y que debe prepararse un staging separado. También identificó el proyecto Vercel `franco-9ec3/amigo-secreto2026`. No se ha comprobado su configuración, dominio, historial o contenido remoto. No existe todavía un Project Ref confirmado para staging ni un dominio de prueba aprobado.
+T25 está **publicado y comprobado en staging**: [abrir aplicación](https://amigo-secreto2026-staging.vercel.app). Supabase `eknnkmndfxgyjsdgkwkh` (`us-east-1`, PG17) y Vercel `franco-9ec3/amigo-secreto2026-staging` tienen IDs distintos de producción. Las 14 migraciones, tres Edge, variables propias, frontend/descargador y bootstrap están completos; aceptación técnica alojada correcta. [Resultado de publicación, acceso y pendientes](staging-deployment-result.md); [baseline y migraciones](staging-migration-result.md). Producción no fue consultada por SQL ni modificada. Recorrido guiado con lector T21 validado por el usuario y [logs Supabase revisados](staging-logs-review.md); [inspección productiva preparada](production-review.md), todavía no ejecutada.
 
-El paquete permite revisar código, migraciones y configuración antes del primer acceso a la base remota, como pidió el usuario. La secuencia posterior y la aceptación están en [despliegue y rollback](deployment-review.md); las variables por servidor, en [entornos](environment.md). Las integraciones Supabase y Vercel se sugirieron, pero no consta su instalación/conexión. La herramienta de navegador respondió que su host no estaba disponible; no se accedió al dashboard autenticado por esa vía.
+La corrección posterior de confirmación de guardado y subida durante revalidación está publicada; [seguimiento](staging-feedback-result.md). Conserva el manifiesto inicial y añade `artifacts/t25-feedback/source-manifest.json` para las fuentes nuevas, sin modificar el conjunto de migraciones.
+
+El paquete permite revisar código, migraciones y configuración antes de aplicarlos. Se respetaron las pausas de inspección y aplicación; la publicación recibió autorización posterior. La secuencia está en [despliegue y rollback](deployment-review.md); variables por servidor, en [entornos](environment.md). Ambas CLI están autenticadas; no dependen de las integraciones del chat o de la extensión VS Code.
+
+La [preparación de staging](staging-review.md) y el [conjunto de 14 migraciones aplicado](staging-migration-review.md) precedieron a la publicación. La comprobación inicial encontró cero participantes/regalos/accesos; la aceptación posterior creó únicamente dos participantes y un regalo sintéticos. No se usaron `link`, include-all/include-roles/include-seed o reset.
 
 ## Generar sin credenciales ni red
 
 Desde la raíz, con Node 24 y dependencias instaladas:
 
 ```cmd
-npm.cmd run prepare:deployment -- --stage staging --supabase-url https://fixture.supabase.co --app-url https://amigo-staging.example.com
+npm.cmd run prepare:deployment -- --stage staging --supabase-url https://eknnkmndfxgyjsdgkwkh.supabase.co --app-url https://amigo-secreto2026-staging.vercel.app
 ```
 
-**Ambos dominios son ficticios.** Este comando reproduce el ejemplo local; no crea un proyecto ni comprueba que exista. Cuando se conozcan los destinos reales de staging, sustituir ambos orígenes y regenerar. El generador no lee `.env.local`, no obtiene claves, no vincula proyectos ni contacta servicios. Rechaza orígenes HTTP, IP/loopback, credenciales en URL, rutas, query, fragmentos y comodines. Exige elegir explícitamente `staging` o `production`; no deduce el entorno de las variables locales.
+**Son los destinos reales de staging identificados por gestión.** Este comando solo reproduce el paquete local; no crea proyectos ni comprueba el servidor. El generador no lee `.env.local`, no obtiene claves, no vincula proyectos ni contacta servicios. Rechaza orígenes HTTP, IP/loopback, credenciales en URL, rutas, query, fragmentos y comodines. Exige elegir explícitamente `staging` o `production`; no deduce el entorno de las variables locales. Los artefactos ficticios de la preparación anterior fueron reemplazados por esta generación.
 
 Salida, ignorada por Git:
 
 - `artifacts/deployment/staging/vercel.json`: configuración Vercel propuesta, con CSP limitada al Supabase elegido.
-- `artifacts/deployment/staging/manifest.json`: orígenes, SHA-256 de cada archivo y de la configuración, inventario de las 14 migraciones, `deployed: false` y `remoteInspected: false`.
+- `artifacts/deployment/staging/frontend.env.example`, `edge.env.example` y `fetch-proxy.env.example`: plantillas con orígenes/callback coherentes y marcadores de claves; sin valores secretos. No sobrescriben archivos locales. Los valores reales se configuraron después por los canales de cada proveedor.
+- `artifacts/deployment/staging/manifest.json`: orígenes, SHA-256 de cada archivo, configuración y plantillas, inventario de las 14 migraciones, `deployed: false`, `remoteInspected: false`, destino sin verificar y plan de migraciones todavía limitado al inventario.
 
-El manifiesto incluye código de aplicación/servidor/funciones, migraciones, lockfile y configuración de build; excluye entornos, semillas y participantes locales. **El inventario no es la lista de migraciones pendientes del remoto.** Esa lista depende de revisar su historial y datos después de aprobar el acceso. Cualquier cambio posterior requiere regenerar y revisar las huellas. No se creó un `vercel.json` raíz con un destino supuesto.
+El manifiesto incluye código de aplicación/servidor/funciones, migraciones, lockfile y configuración de build; excluye entornos reales, semillas y participantes locales. **El inventario no es la lista de migraciones pendientes del remoto.** Esa lista depende de revisar su historial y datos después de aprobar el acceso. Cualquier cambio posterior requiere regenerar y revisar las huellas. El generador no verifica que los orígenes pertenezcan al entorno elegido: confirmar IDs/destinos antes de usarlo. No se creó un `vercel.json` raíz con un destino supuesto.
+
+La inspección y aplicación posteriores reconciliaron ese inventario: las 14 están registradas y no quedan pendientes. Huellas/aprobación/recuperación constan en `migration-plan.json` y el [resultado SQL](staging-migration-result.md); estado publicado en `infrastructure.json`, `hosted-deployment.json` y el [resultado alojado](staging-deployment-result.md). Los flags del manifiesto offline reflejan su generación anterior y no sustituyen esas evidencias. Regenerarlo no vuelve a publicar ni autoriza reaplicar migraciones.
 
 Fuentes: [generador](../scripts/prepare-deployment.mjs), [configuración](../server/deployment-config.ts), [pruebas de rutas y orígenes](../tests/unit/deployment-config.test.ts).
 
@@ -57,8 +64,8 @@ Se comprueban rutas profundas y recarga, estilos, guardado del editor con transp
 
 Además pasó un build en una copia con solo las fuentes necesarias para hosting, sin entornos, tests, scripts ni SQL. Se reutilizaron dependencias de la instalación limpia de T24 mediante junction local; no se simuló una instalación Linux de Vercel ni se subió esa copia. Evidencia completa: [validación](validation-results.md).
 
-## Paso remoto pendiente
+## Estado remoto y continuación
 
-Conectar Supabase y Vercel mediante las integraciones sugeridas o autenticar sus CLI por un canal seguro, sin enviar tokens al chat. Preparar **AmigoSecreto2026-staging** como nombre propuesto, confirmar organización, región, PostgreSQL y disponibilidad/coste antes de crearlo; no se ha creado ni se presupone gratuito. Reservar un dominio estable de prueba y sus variables, aislados de producción.
+Ambas CLI están autenticadas y los dos proyectos staging están publicados/configurados. El usuario confirmó Supabase Free; no se solicitaron upgrades o add-ons. API/signup, secretos propios, funciones/descargador, frontend, acceso inicial y aceptación técnica alojada están registrados en el [resultado](staging-deployment-result.md).
 
-Presentar ese destino y el inventario de migraciones para revisión antes de consultar la base remota. Tras aprobar, comparar historial/datos, respaldo y lista exacta pendiente; presentar diferencias antes de aplicar. No ejecutar `db reset`, seeds o bootstrap local contra proyectos alojados. La publicación y las pruebas reales siguen la [secuencia T25](deployment-review.md). T21 mantiene pendiente el recorrido con lector: el usuario aclaró que solamente se abrió la ventana.
+La promoción sigue la [secuencia T25](deployment-review.md), con revisión/aprobación separadas para producción. El acceso del organizador se abre mediante el helper cifrado documentado; no ejecutar bootstrap de nuevo, `db reset` o seeds. El usuario validó posteriormente el recorrido guiado con lector T21 y aclaró el bloqueo previsto del selector al crear un participante aún sin guardar.

@@ -7,7 +7,7 @@ export function sampleProfile():EditableProfile{return {id:fixtureOwner,name:'Me
 const cors={'Access-Control-Allow-Origin':uiOrigin,'Access-Control-Expose-Headers':'Retry-After','Cache-Control':'no-store'};
 export async function profileEditorFixture(page:Page,initial=sampleProfile(),organizer=false){
   const gifts=await editorFixture(page,[{...sampleGift(),participant_id:initial.id}],organizer,initial.id);
-  const state={profile:structuredClone(initial),writes:[] as Record<string,unknown>[],uploads:[] as string[],fault:'' as ''|'fields'|'lost'|'access'|'rate',field:'personal_message',retryAfter:'2',delay:0,uploadDelay:0,uploadFault:0,uploadRetryAfter:'2400',loadError:false,deniedAccess:false};
+  const state={profile:structuredClone(initial),writes:[] as Record<string,unknown>[],uploads:[] as string[],fault:'' as ''|'fields'|'lost'|'access'|'rate',field:'personal_message',retryAfter:'2',delay:0,validationDelay:0,uploadDelay:0,uploadFault:0,uploadRetryAfter:'2400',loadError:false,deniedAccess:false};
   await page.route(`${api}/rest/v1/participants?**`,async(route)=>{
     const query=new URL(route.request().url()).searchParams;
     if(query.get('slug')!==`eq.${initial.slug}`&&query.get('id')!==`eq.${initial.id}`)return route.fallback();
@@ -18,7 +18,10 @@ export async function profileEditorFixture(page:Page,initial=sampleProfile(),org
   await page.route(`${api}/functions/v1/wishlist-api`,async(route)=>{
     if(route.request().method()==='OPTIONS')return route.fallback();
     const body=route.request().postDataJSON();
-    if(body.action==='validate_access')return state.deniedAccess?route.fulfill({status:401,json:{error:{code:'ACCESS_UNAVAILABLE'}},headers:cors}):route.fallback();
+    if(body.action==='validate_access'){
+      if(state.validationDelay)await new Promise((resolve)=>setTimeout(resolve,state.validationDelay));
+      return state.deniedAccess?route.fulfill({status:401,json:{error:{code:'ACCESS_UNAVAILABLE'}},headers:cors}):route.fallback();
+    }
     if(body.action!=='update_profile')return route.fallback();
     expect(route.request().headers()['x-edit-token']).toBe(fixtureCredential);expect(route.request().headers().authorization).toBeUndefined();expect(JSON.stringify(body)).not.toContain(fixtureCredential);
     expect(Object.keys(body).sort()).toEqual(['action','expected_version','participant_id','profile']);expect(body.profile).not.toHaveProperty('name');expect(body.profile).not.toHaveProperty('slug');

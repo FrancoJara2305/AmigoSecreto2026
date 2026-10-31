@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { focusField } from './focus-field';
-import { CircleAlert, CircleCheck, Gift, Info, LoaderCircle } from 'lucide-react';
+import { CircleAlert, CircleCheck, Gift, Info, LoaderCircle, X } from 'lucide-react';
 
 export function Badge({ children, tone = 'green' }: { children: ReactNode; tone?: 'green' | 'gold' }) {
   return <span className={`badge badge--${tone}`}>{children}</span>;
@@ -11,6 +11,15 @@ export function Notice({ title, children, tone = 'info', live = false, className
   const Icon = tone === 'success' ? CircleCheck : tone === 'error' ? CircleAlert : Info;
   return <div className={`notice notice--${tone} ${className}`} role={live ? tone === 'error' ? 'alert' : 'status' : undefined}>
     <Icon aria-hidden="true" /><div><strong className="notice__title">{title}</strong>{children && <div>{children}</div>}</div>
+  </div>;
+}
+export function SaveFeedback({ message }: { message: string }) {
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => { setDismissed(false); }, [message]);
+  if (!message || dismissed) return null;
+  return <div className="notice notice--success save-feedback" role="status" aria-atomic="true">
+    <CircleCheck aria-hidden="true" /><div><strong className="notice__title">Listo</strong><div>{message}</div></div>
+    <button type="button" className="button button--quiet save-feedback__close" aria-label="Ocultar confirmación" onClick={() => setDismissed(true)}><X aria-hidden="true" /></button>
   </div>;
 }
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
