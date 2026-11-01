@@ -72,6 +72,10 @@ test('hover and keyboard reveal the same avatar, touch uses one tap', async ({ p
   const card = page.locator('.participant-card').first();
   const avatar = card.locator('.participant-card__avatar');
   if (info.project.name === 'desktop') {
+    const cardBox = await card.boundingBox();
+    const nameBox = await card.locator('.participant-card__name').boundingBox();
+    expect(Math.abs(nameBox!.x + nameBox!.width / 2 - cardBox!.x - cardBox!.width / 2)).toBeLessThan(1);
+    expect(Math.abs(nameBox!.y + nameBox!.height / 2 - cardBox!.y - cardBox!.height / 2)).toBeLessThan(1);
     await expect(avatar).toHaveCSS('opacity','0');
     await card.hover(); await expect(avatar).toHaveCSS('opacity','1');
     await page.mouse.move(0,0);
@@ -82,6 +86,26 @@ test('hover and keyboard reveal the same avatar, touch uses one tap', async ({ p
     await card.tap();
     await expect(page).toHaveURL(/\/participante\/melyza$/);
   }
+});
+
+test('section links scroll gradually and keep keyboard focus, with reduced-motion opt-out', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await ready(page);
+  await page.evaluate(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    (window as any).__sectionScroll = [];
+    window.addEventListener('scroll', () => (window as any).__sectionScroll.push(window.scrollY));
+  });
+  await page.getByRole('link', { name: 'Ver participantes', exact: true }).click();
+  const heading = page.getByRole('heading', { name: 'Pequeñas pistas para un gran regalo', exact: true });
+  await expect(heading).toBeFocused();
+  await expect.poll(() => heading.evaluate(element => Math.abs(element.getBoundingClientRect().top) < 240)).toBe(true);
+  const motion = await page.evaluate(() => ({ positions: (window as any).__sectionScroll, scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior }));
+  expect(motion.positions.filter((y:number) => y > 0).length, JSON.stringify(motion)).toBeGreaterThan(1);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('link', { name: 'Volver arriba', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe('auto');
 });
 
 test('loading state and failed request offer retry without provider detail or fake participants', async ({ page }) => {

@@ -4,6 +4,7 @@ import { createBrowserRouter, Outlet, RouterProvider, useLocation } from 'react-
 import { CataloguePage } from '../pages/CataloguePage';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoadingState } from '../components/ui/Feedback';
+import { scrollToSection } from '../services/section-scroll';
 
 const DesignPreview = lazy(() => import('../pages/DesignPreview').then((module) => ({ default: module.DesignPreview })));
 const ParticipantProfilePage = lazy(() => import('../pages/ParticipantProfilePage').then((module) => ({ default: module.ParticipantProfilePage })));
@@ -16,7 +17,10 @@ function AnchorNavigation() {
   useEffect(() => {
     if (!hash) return;
     const target = document.getElementById(hash.slice(1));
-    if (target) { target.scrollIntoView(); if (hash === '#participantes') document.getElementById('participants-title')?.focus({ preventScroll: true }); }
+    if (target) {
+      if (hash === '#participantes') document.getElementById('participants-title')?.focus({ preventScroll: true });
+      return scrollToSection(target);
+    }
   }, [pathname, hash, key]);
   return null;
 }

@@ -1,6 +1,10 @@
 # T25: producción publicada y aceptación completada
 
+**Ajuste visual posterior del 1 de noviembre:** [nombres centrados, imagen gradual y navegación suave](catalogue-visual-polish.md), publicado y verificado en `dpl_8BfVmghYtz75wRpDYC6pSGh8xUrg`. Cambio de frontend sin operaciones sobre datos o accesos.
+
 **Seguimiento del 1 de noviembre:** [corrección de rutas y configuración de despliegues Git](routing-git-deployment-fix.md). El despliegue actual corregido es `dpl_2RVveE6BASxrffnjnCiTnZHfK1JR`. Este informe conserva la evidencia del cierre inicial; el enlace del organizador pudo rotarse después desde la interfaz.
+
+El acceso inicial se rotó y el usuario perdió su reemplazo. Después de autorización expresa se [recuperó el organizador y sincronizó el comando local](organizer-access-recovery.md), conservando el participante y sus datos. Para abrirlo se recomienda el script versionable `scripts/organizer-production.ps1 -Open`; el helper anterior delega en él.
 
 Resultado del **2026-10-31, America/Lima**, tras la autorización «Autorizo» para aplicar el [plan revisado](production-publication-review.md), publicar y crear el acceso inicial del organizador. **Producción está disponible en [amigo-secreto2026.vercel.app](https://amigo-secreto2026.vercel.app).** Staging conserva sus proyectos, datos y acceso independientes.
 
@@ -55,7 +59,7 @@ Desde la raíz del repositorio, en este usuario/equipo Windows:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\artifacts\deployment\production\open-organizer.ps1 -Open
 ```
 
-`-Check` verifica el cifrado sin abrir navegador. El helper y `organizer-access.dpapi.local` están ignorados por Git y excluidos de Vercel. El enlace no se imprimió en el chat o logs. No debes crear otro organizador al iniciar sesión: reabre el enlace conservado; la aplicación elimina su permiso en memoria al recargar/cerrar. Si rotas el enlace desde la interfaz, conserva el nuevo: este archivo inicial seguirá conteniendo el anterior. No se ejecuta recuperación automática.
+`-Check` verifica cifrado/formato locales sin abrir navegador; no certifica que el enlace continúe vigente en el servidor. El archivo secreto está ignorado por Git y excluido de Vercel. El enlace no se imprimió en el chat o logs. No debes crear otro organizador al iniciar sesión: reabre el enlace conservado; la aplicación elimina su permiso en memoria al recargar/cerrar. Si rotas desde la interfaz, conserva el nuevo y sincroniza la copia local con [la opción de importación segura](organizer-access-recovery.md). Perder el enlace nuevo requiere una recuperación administrativa autorizada, no abrir de nuevo el inicial.
 
 ## Cierre y operación posterior
 
