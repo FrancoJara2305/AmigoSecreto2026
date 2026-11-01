@@ -1,5 +1,7 @@
 # T25: producción publicada y aceptación completada
 
+**Corrección posterior de foto administrativa:** [selección durante revalidación y preview](organizer-photo-picker-fix.md), publicada en `dpl_B2s6hEuTTFQGf74NP6XQFRdggkkC`. No cambia las fotos guardadas ni los accesos; los informes siguientes conservan su estado histórico.
+
 **Ajuste visual posterior del 1 de noviembre:** [nombres centrados, imagen gradual y navegación suave](catalogue-visual-polish.md), publicado y verificado en `dpl_8BfVmghYtz75wRpDYC6pSGh8xUrg`. Cambio de frontend sin operaciones sobre datos o accesos.
 
 **Seguimiento del 1 de noviembre:** [corrección de rutas y configuración de despliegues Git](routing-git-deployment-fix.md). El despliegue actual corregido es `dpl_2RVveE6BASxrffnjnCiTnZHfK1JR`. Este informe conserva la evidencia del cierre inicial; el enlace del organizador pudo rotarse después desde la interfaz.

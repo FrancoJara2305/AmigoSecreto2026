@@ -1,9 +1,62 @@
-import { uiOrigin } from './fixtures/origins';
+import { uiOrigin,apiOrigin } from './fixtures/origins';
 import { expect,test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { mkdir } from 'node:fs/promises';
+import { mkdir,readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { organizerFixture,openOrganizer,replacement } from './fixtures/organizer';
+
+test('organizer photo selected after focus waits for access validation before preview and save',async({page})=>{
+  const {state,profile}=await organizerFixture(page);
+  await openOrganizer(page);
+  await page.getByRole('link',{name:'Editar datos de Melyza',exact:true}).click();
+  const input=page.getByLabel('Subir foto',{exact:true});
+  await expect(input).toBeEnabled();
+  let release!:()=>void;
+  const pending=new Promise<void>(resolve=>{release=resolve;});
+  await page.route(`${apiOrigin}/functions/v1/wishlist-api`,async route=>{
+    if(route.request().method()==='POST'&&route.request().postDataJSON()?.action==='validate_access')await pending;
+    return route.fallback();
+  });
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await expect(input).toBeDisabled();
+  const bytes=Array.from(await readFile(new URL('../fixtures/images/small.png',import.meta.url)));
+  try{
+    await page.evaluate(bytes=>{const input=document.getElementById('profile-photo_path') as HTMLInputElement;const files=new DataTransfer();files.items.add(new File([new Uint8Array(bytes)],'chosen.png',{type:'image/png'}));input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));},bytes);
+    expect(profile.state.uploads).toHaveLength(0);
+  }finally{release();}
+  await expect(page.getByRole('img',{name:'Vista previa de foto o ilustración'}).locator('img')).toBeVisible();
+  expect(profile.state.uploads).toHaveLength(1);
+  expect(state.writes).toHaveLength(0);
+  await page.getByRole('button',{name:'Guardar participante',exact:true}).click();
+  await expect(page.getByText('Los datos del participante quedaron guardados.')).toBeVisible();
+  expect(state.people[0].photo_path).toContain('/avatar/');
+});
+
+test('organizer photo selected during a failed focus validation never uploads or changes the participant',async({page})=>{
+  const {state,profile}=await organizerFixture(page);
+  await openOrganizer(page);
+  await page.getByRole('link',{name:'Editar datos de Melyza',exact:true}).click();
+  const input=page.getByLabel('Subir foto',{exact:true});
+  await expect(input).toBeEnabled();
+  let release!:()=>void;
+  const pending=new Promise<void>(resolve=>{release=resolve;});
+  await page.route(`${apiOrigin}/functions/v1/wishlist-api`,async route=>{
+    if(route.request().method()==='POST'&&route.request().postDataJSON()?.action==='validate_access')await pending;
+    return route.fallback();
+  });
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await expect(input).toBeDisabled();
+  const bytes=Array.from(await readFile(new URL('../fixtures/images/small.png',import.meta.url)));
+  try{
+    await page.evaluate(bytes=>{const input=document.getElementById('profile-photo_path') as HTMLInputElement;const files=new DataTransfer();files.items.add(new File([new Uint8Array(bytes)],'chosen.png',{type:'image/png'}));input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));},bytes);
+    state.denied=true;
+  }finally{release();}
+  await expect(page.getByText('La administración está en pausa',{exact:true})).toBeVisible();
+  await expect(page.getByText('Tu acceso ya no permite subir fotos. La foto guardada se conserva.',{exact:true})).toBeVisible();
+  expect(profile.state.uploads).toHaveLength(0);
+  expect(state.writes).toHaveLength(0);
+  expect(state.people[0].photo_path).toBeNull();
+});
 
 test('roster, keyboard ordering, links to existing editors and dynamic creation',async({page})=>{
   const {state}=await organizerFixture(page);await openOrganizer(page);await expect(page.getByRole('button',{name:'Subir a Melyza'})).toBeDisabled();await page.getByRole('button',{name:'Subir a Karina'}).focus();await page.keyboard.press('Enter');await expect(page.getByText('Orden actualizado.',{exact:true})).toBeVisible();await expect(page.getByRole('list',{name:'Participantes del intercambio'}).getByRole('heading').first()).toHaveText('Karina');

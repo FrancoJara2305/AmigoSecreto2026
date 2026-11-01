@@ -85,6 +85,7 @@ Si perdiste el enlace, npm.cmd run organizer:bootstrap -- --recover --app-url ht
 | Tema | Guía |
 | --- | --- |
 | Entender cómo se construyó el proyecto y por qué | [Guía didáctica del proyecto](docs/guia-didactica-del-proyecto.md) |
+| Propuesta de chat contextual para buscar regalos y tiendas en Lima | [Plan del asistente Gemini](docs/gemini-assistant-implementation-plan.md) |
 | Variables públicas, Edge/Node, orígenes y proxy local | [Entornos](docs/environment.md) |
 | Migraciones locales y revisión previa a vincular | [Integración Supabase](docs/supabase-integration.md) |
 | Arranque, limpieza, errores y aceptación manual | [Operación](docs/operations.md) |

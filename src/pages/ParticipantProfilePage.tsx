@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { ArrowLeft, Heart, RotateCcw, Sparkles } from 'lucide-react';
 import { AppLink as Link } from '../components/ui/AppLink';
 import { useParams } from 'react-router';
@@ -12,6 +12,9 @@ import { usePublicProfile } from '../hooks/usePublicProfile';
 import { usePrivateAccess } from '../app/PrivateAccessProvider';
 import { scopeCanEdit } from '../domain/private-access';
 import { PrivateProfileControls } from '../components/access/PrivateProfileControls';
+
+// Prompt helper code and styles load only on profile pages, after the profile is ready.
+const GiftAssistant = lazy(() => import('../components/assistant/GiftAssistant').then((module) => ({ default: module.GiftAssistant })));
 
 export function ParticipantProfilePage() {
   const { slug = '' } = useParams();
@@ -32,6 +35,8 @@ export function ParticipantProfilePage() {
     {state.status === 'ready' && <><PrivateProfileControls participantId={state.data.participant.id} slug={slug} /><header className="profile-header"><div className="profile-header__identity"><div className="profile-header__avatar"><ParticipantAvatar participant={state.data.participant} /></div><div className="profile-header__copy"><p className="eyebrow"><span aria-hidden="true">✦</span> UNA LISTA CON ILUSIÓN</p><h1 ref={heading} tabIndex={-1}>{state.data.participant.name}</h1>{state.data.participant.personal_message && <p className="profile-header__message">{state.data.participant.personal_message}</p>}</div></div><CopyPublicProfile key={slug} slug={state.data.participant.slug} /></header>
       <section className="profile-wishlist" aria-labelledby="wishlist-title"><div className="profile-section-heading"><div><p className="eyebrow"><span>01</span> PEQUEÑAS PISTAS</p><h2 id="wishlist-title">Mi lista de deseos</h2></div><Sparkles aria-hidden="true" /></div><p className="profile-wishlist__intro">Tres ideas para inspirarte; el orden no indica preferencia.</p><WishlistGrid slots={state.data.slots} actions={editable ? ({ position, gift }) => <Link className="button button--secondary" aria-label={`${gift ? 'Editar regalo de' : 'Añadir regalo a'} la opción ${position}`} to={`/participante/${slug}/regalo/${position}/editar`}>{gift ? 'Editar regalo' : 'Añadir regalo'}</Link> : undefined} /></section>
       <section className="profile-preferences" aria-labelledby="preferences-title"><span className="profile-preferences__icon"><Heart aria-hidden="true" /></span><div><p className="eyebrow"><span>02</span> LOS DETALLES QUE CUENTAN</p><h2 id="preferences-title">Un poquito sobre mis gustos</h2><p>{state.data.participant.general_preferences || 'Todavía no se han añadido gustos o consideraciones generales.'}</p></div></section>
+      <Suspense fallback={null}><GiftAssistant key={state.data.participant.id} participant={state.data.participant}
+        gifts={state.data.slots.flatMap(({ gift }) => gift ? [gift] : [])} /></Suspense>
     </>}
   </div></AppLayout>;
 }

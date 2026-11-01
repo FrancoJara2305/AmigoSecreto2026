@@ -33,7 +33,7 @@ export function OrganizerForm({mode,id,canWrite}:{mode:'new'|'edit'|'event';id:s
 function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|'edit'|'event';canWrite:boolean}){
   const [creationId]=useState(()=>crypto.randomUUID()),[base,setBase]=useState(initial),[draft,setDraft]=useState(()=>({...toDraft(initial??{person:{id:creationId,name:'',slug:'',version:1,display_order:0,photo_path:null,photo_url:null,avatar_key:'gift',personal_message:null,general_preferences:null}}),...(mode==='new'?{display_order:''}:{})}));
   const [baseline,setBaseline]=useState(()=>JSON.stringify(draft)),[autoSlug,setAutoSlug]=useState(mode==='new'),[fields,setFields]=useState<Record<string,string>>({}),[notice,setNotice]=useState(''),[needsReview,setNeedsReview]=useState(false),[latest,setLatest]=useState<Model|null|undefined>(),[slugConfirm,setSlugConfirm]=useState(false),[loadConfirm,setLoadConfirm]=useState(false),[created,setCreated]=useState('');
-  const op=useAdminOperation(),reviewOp=useAdminOperation(),{upload}=usePrivateAccess(),navigate=useNavigate(),location=useLocation();
+  const op=useAdminOperation(),reviewOp=useAdminOperation(),{upload,state:accessState}=usePrivateAccess(),navigate=useNavigate(),location=useLocation();
   const [uploading,setUploading]=useState(false),[uploadIssue,setUploadIssue]=useState(''),[uploadAt,setUploadAt]=useState(0),[,tick]=useState(0),[reviewing,setReviewing]=useState(false),[reviewError,setReviewError]=useState(false);
   const controller=useRef<AbortController|null>(null),reviewController=useRef<AbortController|null>(null),locked=useRef(false),mounted=useRef(true);
   const person=base&&'person' in base?base.person:null,event=base&&'event' in base?base.event:null,creating=mode==='new'&&!person;
@@ -73,9 +73,14 @@ function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|
     setAutoSlug(false);setNeedsReview(false);setLatest(undefined);op.clear();setFields({});setNotice(keep?'Conservamos tu borrador. Revisa los datos antes de guardar sobre la versión actual.':'Cargamos los datos guardados actualmente.');if(mode==='new'&&!keep&&'person' in latest)setCreated(latest.person.id);
   }
   async function uploadPhoto(file:File):Promise<string|null>{
-    if(!canWrite||creating||locked.current||busy||uploadAt>Date.now())return null;locked.current=true;setUploading(true);setUploadIssue('');const abort=new AbortController();controller.current=abort;
+    if(creating||locked.current||busy||uploadAt>Date.now())return null;
+    // The picker can return after focus revalidation temporarily pauses the form.
+    // Let the shared upload session await that check and enforce the actual scope.
+    const checkingOrganizer=accessState.status==='checking'&&accessState.entryType==='organizer';
+    if(!canWrite&&!checkingOrganizer){setUploadIssue('Tu acceso ya no permite subir fotos. La foto guardada se conserva.');return null;}
+    locked.current=true;setUploading(true);setUploadIssue('');const abort=new AbortController();controller.current=abort;
     try{const path=await upload(previewPerson.id,'avatar',file,abort.signal);if(!mounted.current||abort.signal.aborted)return null;setDraft((d)=>({...d,photo:{...d.photo,photoSource:'upload',photo_path:path}}));return path;}
-    catch(error){if(mounted.current){if(error instanceof MediaUploadError&&error.kind==='rate')setUploadAt(Date.now()+Math.max(1,error.retryAfter)*1000);setUploadIssue(error instanceof MediaUploadError&&error.kind==='invalid'?'Elige una imagen JPEG, PNG o WebP válida de hasta 3 MiB.':error instanceof MediaUploadError&&error.kind==='rate'?'Alcanzaste el límite de imágenes. Espera antes de volver a subir.':'No pudimos completar la subida. La foto guardada se conserva.');}return null;}
+    catch(error){if(mounted.current){if(error instanceof MediaUploadError&&error.kind==='rate')setUploadAt(Date.now()+Math.max(1,error.retryAfter)*1000);setUploadIssue(error instanceof MediaUploadError&&error.kind==='invalid'?'Elige una imagen JPEG, PNG o WebP válida de hasta 3 MiB.':error instanceof MediaUploadError&&error.kind==='rate'?'Alcanzaste el límite de imágenes. Espera antes de volver a subir.':error instanceof MediaUploadError&&error.kind==='access'?'Tu acceso ya no permite subir fotos. La foto guardada se conserva.':'No pudimos completar la subida. La foto guardada se conserva.');}return null;}
     finally{locked.current=false;if(mounted.current)setUploading(false);}
   }
   const title=mode==='event'?'Nuestro evento':creating?'Añadir participante':`Editar a ${person?.name}`;
