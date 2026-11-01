@@ -1,12 +1,12 @@
 # Amigo Secreto 2026
 
-Catálogo de participantes y listas de tres ideas de regalo, con edición mediante enlaces privados y panel del organizador. React, TypeScript, Vite y Supabase; sin cuentas convencionales de Auth. Funciones, permisos, imágenes e importación están implementados y probados **en local**. La instancia remota no se ha vinculado ni desplegado.
+Catálogo de participantes y listas de tres ideas de regalo, con edición mediante enlaces privados y panel del organizador. React, TypeScript, Vite y Supabase; sin cuentas convencionales de Auth. Funciones, permisos, imágenes e importación están implementados y probados en local/staging; la aplicación ya está publicada en producción, con staging independiente.
 
 El grupo contiene Melyza, Karina, Norma, Magaly, Cesar, Fabrizio, Brandon, Pamela, Franco, Derek Leonardo y Alice. La previsualización comienza con listas vacías; nombres, orden, perfiles y deseos se administran desde el panel en el entorno persistente. No incluye sorteo, asignaciones, reservas, notificaciones o presupuesto configurable.
 
 ## Instalar y previsualizar
 
-Requiere Node 24+, npm y Git; el lockfile fija las versiones. Docker Desktop con WSL2/contenedores Linux se necesita para Supabase, no para la vista temporal. Las pruebas TLS usan OpenSSL de Git para Windows (C:/Program Files/Git/usr/bin/openssl.exe); las pruebas de navegador usan Edge. No necesitas instalar psql o Deno en Windows: los ensayos usan sus contenedores.
+Requiere Node 24.x, npm y Git; el lockfile fija las versiones. Docker Desktop con WSL2/contenedores Linux se necesita para Supabase, no para la vista temporal. Las pruebas TLS usan OpenSSL de Git para Windows (C:/Program Files/Git/usr/bin/openssl.exe); las pruebas de navegador usan Edge. No necesitas instalar psql o Deno en Windows: los ensayos usan sus contenedores.
 
 ~~~cmd
 npm.cmd ci --ignore-scripts
@@ -93,4 +93,4 @@ Si perdiste el enlace, npm.cmd run organizer:bootstrap -- --recover --app-url ht
 | Evidencia y comprobaciones | [Seguridad](docs/security-review.md), [rendimiento](docs/performance-review.md), [resultados](docs/validation-results.md) |
 | Estado y validación con lector de pantalla | [Avance](docs/implementation-progress.md), [accesibilidad](docs/accessibility-review.md) |
 
-**T25: [staging publicado](https://amigo-secreto2026-staging.vercel.app)**, separado de producción, con 14 migraciones verificadas y tres Edge activas. Confirmación visible y subida durante revalidación corregidas, con 141 casos UI y ensayo alojado de archivos/URLs/importación; [seguimiento](docs/staging-feedback-result.md). **Recorrido guiado T21 validado por el usuario y [logs Supabase revisados](docs/staging-logs-review.md).** [Acceso seguro](docs/staging-deployment-result.md). Datos del usuario conservados; producción sin consulta SQL/cambios. [Inspección productiva de solo lectura preparada](docs/production-review.md), antes de revisar pendientes/recuperación y aprobar promoción. `.env.local`, artefactos y respaldos no se versionan.
+**T25 completado en el alcance autorizado: [producción publicada](https://amigo-secreto2026.vercel.app)** y [staging separado](https://amigo-secreto2026-staging.vercel.app). Node 24 efectivo, tres Edge activas, catorce migraciones y cero pendientes. Confirmación de guardado y fotos corregidas, recorrido guiado T21 y aceptación/logs completados. **Un organizador inicial cifrado; cero participantes o regalos añadidos a producción.** [Resultado, límites y comando para abrir el organizador](docs/production-deployment-result.md). Respaldo/restauración local verificados; copia externa pendiente por decisión del usuario. `.env.local`, artefactos y respaldos no se versionan.

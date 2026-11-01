@@ -4,7 +4,7 @@ La ruta `/diseno` ofrece una galería de revisión de los componentes de T09. No
 
 ## Previsualizar y comprobar
 
-Desde la raíz del repositorio, con Node 24+:
+Desde la raíz del repositorio, con Node 24.x:
 
 ```powershell
 npm ci

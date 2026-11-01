@@ -1,6 +1,6 @@
 # Operación local y aceptación
 
-Esta guía usa Windows/CMD o PowerShell y la pila **local**. Para iniciar desde cero sigue [README](../README.md); para variables y transporte consulta [entornos](environment.md). El esquema remoto permanece sin consultar/modificar.
+Esta guía usa Windows/CMD o PowerShell y la pila **local**. Para iniciar desde cero sigue [README](../README.md); para variables y transporte consulta [entornos](environment.md). Para producción ya publicada y acceso inicial cifrado consulta el [resultado T25](production-deployment-result.md); los comandos de esta guía siguen limitados al entorno local.
 
 ## Arranque y cierre
 

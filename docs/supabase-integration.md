@@ -1,5 +1,7 @@
 # Integración Supabase y revisión de migraciones
 
+Última fase: [inspección productiva en solo lectura completada](production-inspection-result.md). Ref `jtuhcilcnuydsbcbsazo`: catorce migraciones ya registradas, cero pendientes; contrato/permisos coincidentes con staging y datos de uso vacíos, una fila de evento. Nueve diferencias de fuente eran solo CRLF/LF. No hubo mutaciones, exportación o despliegue productivo. El estado anterior a esa inspección se conserva debajo como historial.
+
 Estado actual al 2026-10-31: **staging publicado y comprobado**, con las 14 migraciones aplicadas/verificadas, cero pendientes y tres Edge activas en `eknnkmndfxgyjsdgkwkh`. La [publicación](staging-deployment-result.md) registra API limitada a public, signup/acceso anónimo desactivados, cero usuarios Auth/relaciones Realtime, secretos propios y acceso inicial del organizador cifrado. Se conservaron dos participantes, un regalo y una imagen sintéticos; accesos personales de prueba revocados. [Recuperación inicial](staging-migration-result.md). AmigoSecreto2026 (`jtuhcilcnuydsbcbsazo`) es producción, sin consulta SQL/cambios. Repositorio sin link; lector guiado T21 validado por el usuario y [logs Supabase revisados](staging-logs-review.md); [inspección productiva preparada](production-review.md) y promoción pendientes. Avance: [tareas](implementation-progress.md), [paquete](deployment-package.md) y [validación](validation-results.md).
 
 ## Arquitectura aplicada

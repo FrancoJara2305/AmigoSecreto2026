@@ -1,5 +1,7 @@
 # T25: staging separado y revisión de migraciones
 
+Continuación: [producción inspeccionada READ ONLY](production-inspection-result.md) tras autorización, con catorce migraciones registradas, cero pendientes y contrato compatible. No se modificó producción. Las referencias siguientes a ausencia de consultas productivas describen las fases anteriores.
+
 Última publicación: `dpl_GLM6zkS49db44WAJSD7VdhVb7m6h`, con corrección de confirmación visible y subida durante revalidación; [seguimiento](staging-feedback-result.md). Los datos/counts y el despliegue inicial documentados abajo corresponden a aquella fase y no sustituyen el seguimiento del uso posterior.
 
 Actualizado el 2026-10-31 (America/Lima). **Staging está publicado y su aceptación técnica alojada pasó:** [abrir aplicación](https://amigo-secreto2026-staging.vercel.app). Las 14 migraciones están verificadas, cero pendientes; tres Edge activas, frontend/descargador y secretos propios configurados. Se creó el acceso inicial del organizador y datos sintéticos de prueba, con enlaces personales revocados. [Resultado, acceso seguro y pendientes](staging-deployment-result.md); [baseline y migraciones](staging-migration-result.md); [huellas](staging-migration-review.md). Producción no fue consultada por SQL ni modificada.

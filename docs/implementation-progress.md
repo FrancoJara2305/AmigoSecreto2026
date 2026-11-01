@@ -1,6 +1,6 @@
 # Avance del plan
 
-Trabajo autorizado por iteraciones. **T25 tiene staging publicado y aceptación técnica alojada correcta**, en Supabase/Vercel separados de producción. Las 14 migraciones siguen verificadas, tres Edge están activas y las credenciales son propias del entorno. **Recorrido guiado con lector T21 validado por el usuario y logs Supabase revisados**, con observaciones registradas. Producción sin consulta SQL/cambios; su inspección de solo lectura está preparada para revisión/aprobación.
+Trabajo autorizado por iteraciones. **T25 completado en el alcance autorizado: [producción publicada y aceptada](production-deployment-result.md)** en https://amigo-secreto2026.vercel.app, con staging independiente. Node 24 efectivo, tres Edge activas y catorce migraciones ya registradas (cero pendientes/aplicadas). Un organizador inicial cifrado; cero participantes/regalos añadidos. La copia externa sigue pendiente por decisión del usuario; límites y operación en el informe.
 
 Seguimiento de uso: **confirmación de guardado visible y subida durante revalidación corregidas/publicadas**; 141 casos UI correctos y ensayo alojado de archivos, URLs e imagen importada con ambos roles. Asesores staging sin hallazgos y datos del usuario conservados. [Resultado y pendientes](staging-feedback-result.md).
 
@@ -31,7 +31,11 @@ Seguimiento de uso: **confirmación de guardado visible y subida durante revalid
 | **T22** | **Integración y seguridad comprobadas en local:** 303 aserciones en PostgreSQL real, ataques HTTP/Storage, conflictos/cuotas/nonce concurrentes, siete carreras administrativas, lint, seis casos UI y panel real aislado. Sin fallos críticos observados en lo ensayado. |
 | **T23** | **Completa en local:** 16 mediciones finales de producción dentro de presupuesto, JS inicial reducido, perfil estable e imagen LCP priorizada. 339 casos UI y 37 comprobaciones entre motores correctos; sin operaciones remotas. |
 | **T24** | **Completa en local:** README/variables/operación actualizados, instalación limpia desde lockfile probada, respaldo/restauración DB+Storage y recuperación/mantenimiento verificados en pila desechable. Sin accesos remotos. |
-| **T25** | **Staging publicado y comprobado:** 14 migraciones, tres Edge activas, API/signup y secretos propios, frontend/descargador y bootstrap. Ensayos reales correctos; 16 mediciones alojadas y 141 casos UI de las correcciones. Lector guiado validado por el usuario; 1832 eventos de logs revisados sin 5xx/severidad error, con observaciones. Inspección productiva READ ONLY preparada; producción sin consulta SQL/cambios y promoción pendiente. |
+| **T25** | **Completa en el alcance autorizado:** staging separado con ensayos reales y correcciones; producción publicada/aceptada en Node 24, tres Edge activas, catorce migraciones ya registradas/cero pendientes. Respaldo/restauración local y runtime cifrados comprobados; un organizador inicial, cero participantes/regalos añadidos. Logs, CSP, lectura y permisos verificados. Copia externa pendiente por decisión del usuario; límites en el [resultado](production-deployment-result.md). |
+
+## T25: producción publicada
+
+[Resultado y apertura segura del organizador](production-deployment-result.md). Despliegue `dpl_Bo3Vt83ahS1pi98FEv7yCbiAf3DD`, dominio canónico comprobado, cinco variables Vercel/siete Edge y un único bootstrap sin recuperación. Único cambio de fuentes respecto de staging: pin de Node 24.x en los dos manifests. Las fases siguientes conservan su estado histórico; el cierre actual es este.
 
 ## T25: staging publicado
 
@@ -41,7 +45,7 @@ El generador no lee entornos ni conecta servicios: requiere dos orígenes HTTPS 
 
 La aceptación alojada pasó rutas profundas/recarga, CORS/CSP, organizador/editores, persistencia/versiones, ámbito personal, PNG→WebP/Storage e importación real desde Steam mediante HMAC/callback/nonce. Revocar con editor abierto bloqueó el guardado. Quedan dos participantes, un regalo y una imagen sintéticos; tres tokens personales revocados y un organizador activo cifrado localmente. Cero usuarios Auth y relaciones Realtime; signup/acceso anónimo desactivados. Las 16 mediciones alojadas pasaron los presupuestos con ese catálogo pequeño; no equivalen al conjunto representativo de T23 o métricas de usuarios.
 
-El build remoto y comprobaciones de fuentes revisadas pasaron sin cambiar código de aplicación, migraciones o dependencias en la publicación inicial. Las correcciones y el lector están en el [seguimiento](staging-feedback-result.md); [logs](staging-logs-review.md) completados con observaciones. La [inspección productiva](production-review.md) está preparada y no ejecutada; faltan reconciliación/recuperación del destino y promoción aprobada. Las secciones históricas siguientes conservan los resultados y pendientes de cada iteración anterior.
+El build remoto y comprobaciones de fuentes revisadas pasaron sin cambiar código de aplicación, migraciones o dependencias en la publicación inicial. Las correcciones y el lector están en el [seguimiento](staging-feedback-result.md); [logs](staging-logs-review.md) completados. La [inspección productiva](production-inspection-result.md) está completada y reconciliada; la [recuperación lógica local](production-recovery-result.md) también está verificada. La [revisión de configuración](production-publication-review.md) se autorizó y aplicó después; [producción publicada/aceptada](production-deployment-result.md). La copia externa continúa pendiente por decisión del usuario. Las secciones históricas siguientes conservan los resultados y pendientes de cada iteración anterior.
 
 ## T24: guías operativas y recuperación
 
