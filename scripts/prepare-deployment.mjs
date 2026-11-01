@@ -15,7 +15,7 @@ const stage=options['--stage'],directory=resolve('artifacts/deployment',stage);a
 const git=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{encoding:'utf8',windowsHide:true});assert.equal(git.status,0);
 const files=[...new Set(git.stdout.split('\0').filter((name)=>name&&(
   /^(src|server|api|supabase\/functions|supabase\/migrations)\//.test(name)||
-  ['package.json','package-lock.json','index.html','vite.config.ts','tsconfig.json','supabase/config.toml','.vercelignore','scripts/prepare-deployment.mjs'].includes(name)
+  ['package.json','package-lock.json','index.html','vite.config.ts','vercel.json','tsconfig.json','supabase/config.toml','.vercelignore','scripts/prepare-deployment.mjs'].includes(name)
 )))].filter((name)=>!/(^|\/)\.env(?:$|\.)/.test(name)).sort();
 const digest=(bytes)=>createHash('sha256').update(bytes).digest('hex');
 const entries=await Promise.all(files.map(async(path)=>({path,sha256:digest(await readFile(path))})));

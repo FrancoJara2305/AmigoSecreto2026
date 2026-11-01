@@ -1,5 +1,7 @@
 # Preparación de despliegue y rollback
 
+Última corrección productiva: `dpl_2RVveE6BASxrffnjnCiTnZHfK1JR`, con [configuración raíz para Git y entradas privadas comprobadas](routing-git-deployment-fix.md). Conservar `vercel.json` en los commits; el archivo ignorado usado mediante `--local-config` no configura por sí solo los despliegues automáticos.
+
 **T25 completado en el alcance autorizado: [producción publicada y aceptada](production-deployment-result.md)** en https://amigo-secreto2026.vercel.app, con staging independiente. Node 24 efectivo, tres Edge activas y catorce migraciones ya registradas (cero pendientes/aplicadas). Un organizador inicial cifrado; cero participantes/regalos añadidos. La copia externa sigue pendiente por decisión del usuario; límites y operación en el informe. Punto de retorno para futuras versiones compatibles: `dpl_Bo3Vt83ahS1pi98FEv7yCbiAf3DD` del proyecto productivo; no revierte Edge/datos/secretos.
 
 Última versión staging: `dpl_GLM6zkS49db44WAJSD7VdhVb7m6h`, con [confirmación y fotos corregidas](staging-feedback-result.md). La anterior `dpl_5yVrfEAgD4AdRnopdxdqSdem65tN` es el punto de retorno del frontend dentro del mismo proyecto staging; backend/variables no cambiaron en esta corrección.

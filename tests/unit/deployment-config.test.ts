@@ -1,11 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { deploymentOrigin,deploymentEnvironmentTemplates,hostingConfig,spaSource } from '../../server/deployment-config.ts';
 
 test('SPA fallback excludes APIs, assets and missing file paths, including nested routes',()=>{
   const pattern=new RegExp('^'+spaSource+'$');
-  for(const path of ['/','/participante/melyza','/organizador/evento','/participante/melyza/regalo/1/editar','/no-existe'])assert.ok(pattern.test(path),path);
+  for(const path of ['/','/acceso','/organizador/acceso','/organizador/participantes','/participante/melyza','/organizador/evento','/participante/melyza/regalo/1/editar','/no-existe'])assert.ok(pattern.test(path),path);
   for(const path of ['/api','/api/fetch-product','/api/no-existe','/assets','/assets/main.js','/archivo.js','/index.html'])assert.equal(pattern.test(path),false,path);
+});
+test('Git deployments retain the reviewed production SPA routes and security headers at repository root',async()=>{
+  const config=JSON.parse(await readFile(new URL('../../vercel.json',import.meta.url),'utf8'));
+  assert.deepEqual(config,hostingConfig('https://jtuhcilcnuydsbcbsazo.supabase.co'));
+  for(const path of ['/acceso','/organizador/acceso','/organizador/evento']){
+    assert.equal(config.rewrites.find((rule:{source:string})=>new RegExp('^'+rule.source+'$').test(path))?.destination,'/index.html');
+  }
+  for(const path of ['/api/fetch-product','/api/missing','/assets/missing.js']){
+    assert.equal(config.rewrites.some((rule:{source:string})=>new RegExp('^'+rule.source+'$').test(path)),false);
+  }
 });
 test('hosting config uses exact HTTPS backend, protected documents and immutable hashed assets',()=>{
   const config=hostingConfig('https://fixture.supabase.co');

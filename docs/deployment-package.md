@@ -12,6 +12,8 @@ La [preparación de staging](staging-review.md) y el [conjunto de 14 migraciones
 
 ## Generar sin credenciales ni red
 
+La raíz contiene ahora [vercel.json](../vercel.json), correspondiente a producción, para que los despliegues automáticos Git conserven las rutas SPA y cabeceras. El generador lo incluye en el inventario. Para staging debe seleccionarse su `vercel.json` generado con `--local-config`, ya que la CSP usa su propio Supabase. [Incidencia y corrección](routing-git-deployment-fix.md).
+
 Desde la raíz, con Node 24 y dependencias instaladas:
 
 ```cmd

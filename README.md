@@ -84,12 +84,14 @@ Si perdiste el enlace, npm.cmd run organizer:bootstrap -- --recover --app-url ht
 
 | Tema | Guía |
 | --- | --- |
+| Entender cómo se construyó el proyecto y por qué | [Guía didáctica del proyecto](docs/guia-didactica-del-proyecto.md) |
 | Variables públicas, Edge/Node, orígenes y proxy local | [Entornos](docs/environment.md) |
 | Migraciones locales y revisión previa a vincular | [Integración Supabase](docs/supabase-integration.md) |
 | Arranque, limpieza, errores y aceptación manual | [Operación](docs/operations.md) |
 | DB y Storage, exportación/restauración y accesos | [Respaldos](docs/backup-recovery.md) |
 | Estado de staging/producción y rollback | [Despliegue](docs/deployment-review.md) |
 | Configuración, manifiesto SHA-256 y ensayo local de hosting | [Paquete T25](docs/deployment-package.md) |
+| Rutas privadas 404 y configuración persistente para despliegues Git | [Corrección de enrutamiento](docs/routing-git-deployment-fix.md) |
 | Evidencia y comprobaciones | [Seguridad](docs/security-review.md), [rendimiento](docs/performance-review.md), [resultados](docs/validation-results.md) |
 | Estado y validación con lector de pantalla | [Avance](docs/implementation-progress.md), [accesibilidad](docs/accessibility-review.md) |
 

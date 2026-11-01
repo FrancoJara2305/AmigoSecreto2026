@@ -1,5 +1,7 @@
 # T25: producción publicada y aceptación completada
 
+**Seguimiento del 1 de noviembre:** [corrección de rutas y configuración de despliegues Git](routing-git-deployment-fix.md). El despliegue actual corregido es `dpl_2RVveE6BASxrffnjnCiTnZHfK1JR`. Este informe conserva la evidencia del cierre inicial; el enlace del organizador pudo rotarse después desde la interfaz.
+
 Resultado del **2026-10-31, America/Lima**, tras la autorización «Autorizo» para aplicar el [plan revisado](production-publication-review.md), publicar y crear el acceso inicial del organizador. **Producción está disponible en [amigo-secreto2026.vercel.app](https://amigo-secreto2026.vercel.app).** Staging conserva sus proyectos, datos y acceso independientes.
 
 ## Versión e infraestructura
