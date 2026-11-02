@@ -1,8 +1,18 @@
 # Validación de la preparación Supabase
 
-2026-11-02, fotos a tarjeta completa en el catálogo: **regresión UI completa: 385 correctas, 2 omitidas** (hover en táctiles), 0 fallos, en 13,2 min. Commit `2e69503`, sin push. Publicación en staging pendiente. [Detalle](catalogue-visual-polish.md#tarjetas-con-foto).
+2026-11-02, fotos a tarjeta completa en el catálogo: **regresión UI completa: 385 correctas, 2 omitidas** (hover en táctiles), 0 fallos, en 13,2 min. Commit `2e69503`, sin push. Publicado en staging junto con el asistente (`dpl_DSsB81iAhrCN4SJV3AnTyqjq5yND`, READY); prueba en el celular pendiente. [Detalle](catalogue-visual-polish.md#tarjetas-con-foto).
 
-2026-11-02, «Otra consulta» respondida por Gemini, en local: Edge Function `gift-assistant` (sin búsqueda web, `gemini-3.5-flash-lite`, 300 tokens, 20 s), migración de cuota global (10 por minuto y 200 por día) y botón **Preguntar aquí** con aviso previo y respuesta como texto literal. **8 unitarias nuevas (144 en total), 14 comprobaciones SQL nuevas (318 en total) y regresión UI completa: 391 correctas, 2 omitidas**, incluidas la respuesta literal, el foco, los errores con **Copiar texto** disponible y Axe WCAG 2.2 AA. TypeScript, build, revisión estática y documentación correctos. Prueba real con datos ficticios: 4/4 en unos 2 s, sin respuestas cortadas (máximo 136 tokens) y sin seguir la instrucción escondida. Sin despliegue: migración, secretos y función en staging pendientes de confirmación. [Detalle](gift-assistant.md).
+2026-11-02, «Otra consulta» respondida por Gemini, en local: Edge Function `gift-assistant` (sin búsqueda web, `gemini-3.5-flash-lite`, 300 tokens, 20 s), migración de cuota global (10 por minuto y 200 por día) y botón **Preguntar aquí** con aviso previo y respuesta como texto literal. **8 unitarias nuevas (144 en total), 14 comprobaciones SQL nuevas (318 en total) y regresión UI completa: 391 correctas, 2 omitidas**, incluidas la respuesta literal, el foco, los errores con **Copiar texto** disponible y Axe WCAG 2.2 AA. TypeScript, build, revisión estática y documentación correctos. Prueba real con datos ficticios: 4/4 en unos 2 s, sin respuestas cortadas (máximo 136 tokens) y sin seguir la instrucción escondida. Commit `8a0d6e4`, sin push. En staging (`eknnkmndfxgyjsdgkwkh`):
+- **Migración:** dry-run con exactamente una migración nueva; aplicada, y el historial coincide en las 15.
+- **Función `gift-assistant`:** desplegada sin verificación de JWT. Desde el origen de staging, el `GET` devuelve `{"available":false}` con CORS correcto y el `POST` devuelve 503.
+- **Frontend:** publicado (`dpl_DSsB81iAhrCN4SJV3AnTyqjq5yND`).
+
+Con los tres secretos cargados, el `GET` devuelve `{"available":true}`. Resultados de la prueba real en staging, con «Prueba Staging A»:
+- **Llamadas directas:** dos preguntas, una sobre el regalo y otra sobre los gustos. HTTP 200 en unos 2 s. La respuesta del regalo usa sus datos; la de los gustos dice «No lo sé» porque los gustos guardados no son claros.
+- **Rechazos:** origen ajeno, 403; campo extra en la petición, 422.
+- **Navegador real (Edge, 390 px):** en la página publicada, `GET` 200 y `POST` 200, respuesta en 1,9 s con la nota de IA, el foco sigue en **Preguntar aquí** y no hay errores propios en la consola. El único 404 es `favicon.ico`, que el sitio no tiene desde antes.
+
+[Detalle](gift-assistant.md).
 
 2026-11-01, fotos guardadas no cuadradas: el avatar se mostraba como óvalo porque la imagen dimensionaba el contenedor. Ahora siempre es un círculo 1:1 con la parte central, y «Ajustar encuadre» reencuadra la foto guardada leyéndola del almacenamiento público. **Regresión UI completa: 379 correctas y 3 fallos de una prueba de la página de diseño** que esperaba una sola región `status` (la pantalla de carga añade otra); ajustada, esa prueba pasa 24/24 en los tres tamaños. TypeScript, 136 unitarias, build, revisión estática y documentación correctos. [Detalle](photo-editing-polish.md#fotos-guardadas-antes-del-encuadre).
 
