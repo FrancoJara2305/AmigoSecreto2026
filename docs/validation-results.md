@@ -1,5 +1,11 @@
 # Validación de la preparación Supabase
 
+2026-11-02, producción autorizada (`jtuhcilcnuydsbcbsazo`):
+- **Migración:** el dry-run mostró solo `20261102120000_gift_assistant_quota.sql`; aplicada, y el historial coincide en las 15.
+- **Función `gift-assistant`:** desplegada. Desde el dominio de producción responde `{"available":false}` con CORS correcto.
+- **Frontend:** push `6d87bdf..c356a3b` a `main` y build de Vercel READY. Las rutas responden 200, la CSP apunta a la Supabase de producción y el bundle incluye el asistente.
+- **Secretos de Gemini sin cargar:** la escritura de secretos necesita que el usuario la ejecute, así que el asistente queda apagado en producción y «Copiar texto» funciona como antes. Las tarjetas con foto ya están publicadas.
+
 2026-11-02, fotos a tarjeta completa en el catálogo: **regresión UI completa: 385 correctas, 2 omitidas** (hover en táctiles), 0 fallos, en 13,2 min. Commit `2e69503`, sin push. Publicado en staging junto con el asistente (`dpl_DSsB81iAhrCN4SJV3AnTyqjq5yND`, READY); prueba en el celular pendiente. [Detalle](catalogue-visual-polish.md#tarjetas-con-foto).
 
 2026-11-02, «Otra consulta» respondida por Gemini, en local: Edge Function `gift-assistant` (sin búsqueda web, `gemini-3.5-flash-lite`, 300 tokens, 20 s), migración de cuota global (10 por minuto y 200 por día) y botón **Preguntar aquí** con aviso previo y respuesta como texto literal. **8 unitarias nuevas (144 en total), 14 comprobaciones SQL nuevas (318 en total) y regresión UI completa: 391 correctas, 2 omitidas**, incluidas la respuesta literal, el foco, los errores con **Copiar texto** disponible y Axe WCAG 2.2 AA. TypeScript, build, revisión estática y documentación correctos. Prueba real con datos ficticios: 4/4 en unos 2 s, sin respuestas cortadas (máximo 136 tokens) y sin seguir la instrucción escondida. Commit `8a0d6e4`, sin push. En staging (`eknnkmndfxgyjsdgkwkh`):
