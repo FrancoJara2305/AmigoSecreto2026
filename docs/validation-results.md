@@ -1,5 +1,10 @@
 # Validación de la preparación Supabase
 
+2026-11-02, imágenes subidas con más resolución (commit `8843141`): avatares a 1024 px y regalos a 1600 px, con reducción por área y WebP a calidad 82. **145 unitarias y 184 pruebas UI de fotos, subidas y editores correctas.** Medido en local con 12 MP: regalo 403 ms y 89 KB (antes 245 ms y 92 KB); perfil 183 ms y 39 KB (antes 48 ms y 26 KB). Resultado en staging:
+- **Despliegue:** `media-upload` desplegada y frontend publicado (`dpl_BXVs4ARhGq5vjpmw79KZ1SDH8Ac5`).
+- **Subidas reales de 16 MP en Edge**, con la capacidad cifrada de la organizadora y sin asociar a ningún perfil: avatar JPEG guardado a 1024 × 1024 y 20 KB (5,4 s con arranque en frío); regalo JPEG a 1600 × 1600 y 40 KB (2,8 s); regalo PNG a 1600 × 1600 y 19 KB (3,2 s). Ninguna se cortó por el límite de CPU.
+- **Producción:** pendiente de confirmación.
+
 2026-11-02, producción autorizada (`jtuhcilcnuydsbcbsazo`):
 - **Migración:** el dry-run mostró solo `20261102120000_gift_assistant_quota.sql`; aplicada, y el historial coincide en las 15.
 - **Función `gift-assistant`:** desplegada. Desde el dominio de producción responde `{"available":false}` con CORS correcto.
