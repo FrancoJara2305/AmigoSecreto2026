@@ -123,7 +123,7 @@ test('a single saved gift is selected automatically and the panel fits narrow sc
   expect((await axe(page)).violations).toEqual([]);
 });
 
-// "Preguntar aquí": the Edge Function is simulated; the answer must stay literal text.
+// Chat for "Otra consulta": the Edge Function is simulated; answers must stay literal text.
 async function assistantApi(page:Page,options:{available:boolean;reply?:(body:Record<string,unknown>)=>{status:number;json:unknown;headers?:Record<string,string>}}) {
   const posts:Record<string,unknown>[]=[];
   await page.route(`${api}/functions/v1/gift-assistant`,async(route)=>{
@@ -137,53 +137,54 @@ async function assistantApi(page:Page,options:{available:boolean;reply?:(body:Re
   });
   return posts;
 }
+const chat=(page:Page)=>page.getByRole('dialog',{name:'Asistente de regalos'});
+const log=(page:Page)=>chat(page).getByRole('log',{name:'Conversación con el asistente'});
 
-test('"Otra consulta" can be answered here as literal text after a disclosure, and any change discards the answer',async({page},info)=>{
+test('"Otra consulta" opens a chat with only the greeting and a message box, keeps the conversation and renders literal text',async({page},info)=>{
   await profiles(page);
-  const posts=await assistantApi(page,{available:true,reply:()=>({status:200,json:{answer:'<b>Prueba</b> un tono suave.\n- Una taza de cerámica'}})});
+  let turn=0;
+  const posts=await assistantApi(page,{available:true,reply:()=>({status:200,json:{answer:++turn===1?'<b>Prueba</b> un tono suave.\n- Una taza de cerámica':'El azul también va.'}})});
   await page.goto('/participante/melyza');
   await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
-  const ask=panel(page).getByRole('button',{name:'Preguntar aquí'});
-  await expect(ask).toBeDisabled();
-  await panel(page).getByLabel('Opción 3 · Zapatillas cómodas').check();
-  await panel(page).getByLabel('Tu consulta').fill('¿Qué color le quedaría mejor?');
-  await expect(panel(page).getByText(/tu pregunta y los datos públicos de este regalo se envían a Google Gemini/)).toBeVisible();
-  await expect(panel(page).getByRole('button',{name:'Copiar texto'})).toBeEnabled();
-  await ask.click();
-  const answer=panel(page).getByRole('group',{name:'Respuesta del asistente'});
-  await expect(answer).toContainText('<b>Prueba</b> un tono suave.');
-  await expect(answer.locator('b')).toHaveCount(0);
-  await expect(ask).toBeFocused();
-  await expect(answer).toContainText('Respuesta generada por IA, puede equivocarse.');
-  expect(posts).toEqual([{v:1,participant_id:owner,gift_id:'22222222-2222-4222-8222-000000000003',message:'¿Qué color le quedaría mejor?'}]);
+  await expect(log(page).locator('p').first()).toHaveText('Que fue');
+  // Only the chat: no gift choice, district, copy text or copy button.
+  await expect(chat(page).getByRole('radio')).toHaveCount(0);
+  await expect(chat(page).getByLabel('Distrito (opcional)')).toHaveCount(0);
+  await expect(chat(page).getByRole('button',{name:'Copiar texto'})).toHaveCount(0);
+  const field=chat(page).getByLabel('Tu mensaje');
+  await expect(field).toBeFocused();
+  await expect(chat(page).getByRole('button',{name:'Enviar'})).toBeDisabled();
+  await field.fill('¿Qué color le quedaría mejor?');await field.press('Enter');
+  await expect(log(page)).toContainText('<b>Prueba</b> un tono suave.');
+  await expect(log(page).locator('b')).toHaveCount(0);
+  await expect(field).toHaveValue('');await expect(field).toBeFocused();
+  await field.fill('¿Y en azul?');await chat(page).getByRole('button',{name:'Enviar'}).click();
+  await expect(log(page)).toContainText('El azul también va.');
+  expect(posts).toEqual([
+    {v:1,participant_id:owner,message:'¿Qué color le quedaría mejor?',history:[]},
+    {v:1,participant_id:owner,message:'¿Y en azul?',history:[{q:'¿Qué color le quedaría mejor?',a:'<b>Prueba</b> un tono suave.\n- Una taza de cerámica'}]},
+  ]);
+  await expect(chat(page).getByText(/pueden equivocarse/)).toBeVisible();
   await page.emulateMedia({reducedMotion:'reduce'});
   expect((await axe(page)).violations).toEqual([]);
   await mkdir('artifacts/ui',{recursive:true});
-  await page.screenshot({path:`artifacts/ui/assistant-answer-${info.project.name}.png`});
-  await panel(page).getByLabel('Tu consulta').fill('¿Y qué talla?');
-  await expect(answer).toHaveCount(0);
-  await panel(page).getByLabel('Gustos generales de esta persona').check();
-  await expect(panel(page).getByText(/los datos públicos de sus gustos se envían/)).toBeVisible();
-  await ask.click();await expect(answer).toBeVisible();
-  expect(posts[1]).toEqual({v:1,participant_id:owner,gift_id:null,message:'¿Y qué talla?'});
+  await page.screenshot({path:`artifacts/ui/assistant-chat-${info.project.name}.png`});
+  // Closing the panel discards the conversation.
   await page.keyboard.press('Escape');await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
-  await expect(answer).toHaveCount(0);
+  await expect(log(page).locator('p')).toHaveCount(1);
   expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
 });
 
-test('a switched-off assistant hides "Preguntar aquí" and failures keep "Copiar texto" available',async({page})=>{
+test('a switched-off assistant keeps the copy-text form, and chat failures return the message to the box',async({page})=>{
   await profiles(page);await clipboard(page);
   await assistantApi(page,{available:false});
   await page.goto('/participante/melyza');
   await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
-  await panel(page).getByLabel('Gustos generales de esta persona').check();
-  await panel(page).getByLabel('Tu consulta').fill('¿Algo pequeño?');
-  await expect(panel(page).getByRole('button',{name:'Copiar texto'})).toBeEnabled();
-  await expect(panel(page).getByRole('button',{name:'Preguntar aquí'})).toHaveCount(0);
+  await expect(panel(page).getByLabel('Gustos generales de esta persona')).toBeVisible();
+  await expect(page.getByRole('log')).toHaveCount(0);
 
-  await page.unroute(`${api}/functions/v1/gift-assistant`);
   const cases:[{status:number;json:unknown;headers?:Record<string,string>},RegExp][]=[
-    [{status:429,json:{error:{code:'RATE_LIMITED'}},headers:{'Retry-After':'3600'}},/límite de consultas por hoy/],
+    [{status:429,json:{error:{code:'RATE_LIMITED'}},headers:{'Retry-After':'3600'}},/límite de mensajes por hoy/],
     [{status:429,json:{error:{code:'RATE_LIMITED'}},headers:{'Retry-After':'30'}},/Espera un minuto/],
     [{status:503,json:{error:{code:'PROVIDER_UNAVAILABLE'}}},/No pudimos obtener una respuesta/],
   ];
@@ -192,13 +193,10 @@ test('a switched-off assistant hides "Preguntar aquí" and failures keep "Copiar
     await assistantApi(page,{available:true,reply:()=>reply});
     await page.reload();
     await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
-    await panel(page).getByLabel('Gustos generales de esta persona').check();
-    await panel(page).getByLabel('Tu consulta').fill('¿Algo pequeño?');
-    await panel(page).getByRole('button',{name:'Preguntar aquí'}).click();
-    await expect(panel(page).getByRole('alert')).toContainText(text);
-    await expect(panel(page).getByRole('alert')).toContainText('Puedes copiar el texto');
-    await expect(panel(page).getByRole('group',{name:'Respuesta del asistente'})).toHaveCount(0);
-    await panel(page).getByRole('button',{name:'Copiar texto'}).click();
-    await expect(page.getByText('Texto copiado',{exact:true})).toBeVisible();
+    const field=chat(page).getByLabel('Tu mensaje');
+    await field.fill('¿Algo pequeño?');await field.press('Enter');
+    await expect(chat(page).getByRole('alert')).toContainText(text);
+    await expect(field).toHaveValue('¿Algo pequeño?');
+    await expect(log(page).locator('.assistant-bubble')).toHaveCount(1);
   }
 });

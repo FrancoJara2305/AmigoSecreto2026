@@ -1,6 +1,6 @@
 import { boundedText } from './fetch-protocol.ts';
 
-export interface ProviderInput { system:string; user:string }
+export interface ProviderInput { system:string; contents:{role:'user'|'model';text:string}[] }
 export interface ProviderOutput { model:string; text:string; truncated:boolean; usage:{input:number;output:number}|null }
 export interface AssistantProvider { readonly model:string; generate(input:ProviderInput,signal:AbortSignal):Promise<ProviderOutput> }
 export class ProviderError extends Error {
@@ -13,7 +13,7 @@ const GEMINI_ORIGIN='https://generativelanguage.googleapis.com';
 export const isGeminiModel=(value:unknown):value is string=>typeof value==='string'&&/^gemini-[a-z0-9][a-z0-9.-]{0,60}$/.test(value);
 
 // Plain HTTP adapter: one fixed Google origin, key in a header (never in the URL), bounded body,
-// no tools. One call per question; 429/503 from Google are reported as saturation.
+// no tools. One call per message; 429/503 from Google are reported as saturation.
 export function createGeminiProvider(options:{apiKey:string;model:string;fetcher?:typeof fetch;maxOutputTokens?:number;timeoutMs?:number}):AssistantProvider {
   if(!options.apiKey||options.apiKey.startsWith('REPLACE_')||!isGeminiModel(options.model))throw new Error('Provider not configured');
   const {model}=options,fetcher=options.fetcher??fetch;
@@ -22,7 +22,7 @@ export function createGeminiProvider(options:{apiKey:string;model:string;fetcher
     try{
       response=await fetcher(`${GEMINI_ORIGIN}/v1beta/models/${model}:generateContent`,{method:'POST',redirect:'error',
         headers:{'Content-Type':'application/json','x-goog-api-key':options.apiKey},
-        body:JSON.stringify({systemInstruction:{parts:[{text:input.system}]},contents:[{role:'user',parts:[{text:input.user}]}],
+        body:JSON.stringify({systemInstruction:{parts:[{text:input.system}]},contents:input.contents.map((turn)=>({role:turn.role,parts:[{text:turn.text}]})),
           generationConfig:{maxOutputTokens:options.maxOutputTokens??300,temperature:0.4}}),
         signal:AbortSignal.any([signal,AbortSignal.timeout(options.timeoutMs??20000)])});
     }catch{throw new ProviderError('unavailable');}
@@ -41,8 +41,8 @@ export function createGeminiProvider(options:{apiKey:string;model:string;fetcher
 export function createSyntheticProvider():AssistantProvider {
   return {model:'synthetic',async generate(input,signal){
     signal.throwIfAborted();
-    const question=/^Consulta: (.*)$/m.exec(input.user)?.[1]??'';
+    const question=input.contents.at(-1)?.text.split(/\r?\n/).at(-1)??'';
     return {model:'synthetic',truncated:false,usage:null,text:['Respuesta simulada para pruebas locales: no proviene de Gemini.',
-      `Consulta recibida: ${question.slice(0,200)}`,'- Esta es una línea de ejemplo.'].join('\n')};
+      `Mensaje recibido: ${question.slice(0,200)}`,`Turnos previos: ${(input.contents.length-1)/2}`].join('\n')};
   }};
 }

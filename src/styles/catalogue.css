@@ -6,6 +6,12 @@
 .catalogue-header nav a, .catalogue-footer a { position: relative; transition: color var(--duration-smooth) var(--ease-soft); }
 .catalogue-header nav a::after, .catalogue-footer a::after { content: ''; position: absolute; left: 0; right: 0; bottom: .4rem; height: 1px; background: currentColor; opacity: 0; transform: scaleX(.65); transform-origin: left; transition: opacity var(--duration-smooth) var(--ease-soft), transform var(--duration-smooth) var(--ease-soft); }
 .catalogue-header nav a:is(:hover, :focus-visible)::after, .catalogue-footer a:is(:hover, :focus-visible)::after { opacity: 1; transform: scaleX(1); }
+/* Organizer header: two buttons to switch between the participants' view and the panel. */
+.catalogue-header .organizer-switch { display: flex; flex-wrap: wrap; gap: .5rem; }
+.catalogue-header .organizer-switch a { gap: .4rem; min-height: 44px; padding-inline: .9rem; font-size: .8rem; }
+.catalogue-header .organizer-switch a::after { content: none; }
+.catalogue-header .organizer-switch a svg { width: 16px; height: 16px; }
+.catalogue-header .organizer-switch a[aria-current="page"] { background: var(--color-forest); border-color: var(--color-forest); color: var(--color-ivory); }
 .welcome-hero { display: grid; grid-template-columns: 1.25fr 1fr; align-items: center; gap: 1rem; background: var(--color-forest); color: var(--color-ivory); border-radius: var(--radius-card); padding: 2.75rem 2.5rem 2.75rem 3rem; overflow: hidden; }
 .welcome-hero__copy { position: relative; z-index: 1; }
 .welcome-hero .eyebrow { color: var(--color-cream); font-size: .6rem; letter-spacing: .18em; margin-bottom: 1.5rem; }
@@ -50,7 +56,8 @@
 .participant-avatar__initials { font: 400 2rem/1 var(--font-display); }
 /* Cards with a photo: at rest only the name; revealed, the photo covers the whole card and the name fades out.
    Revealed = hover/keyboard focus with a mouse, or crossing the middle of the screen on touch devices (data-revealed). */
-.participant-card--photo .participant-card__name { top: 50%; transition: opacity var(--duration-reveal) var(--ease-soft), top var(--duration-reveal) var(--ease-soft); }
+/* No cream fill here: it would show as a box over the photo while the name fades out. */
+.participant-card--photo .participant-card__name { top: 50%; background: transparent; transition: opacity var(--duration-reveal) var(--ease-soft), top var(--duration-reveal) var(--ease-soft); }
 .participant-card__photo { position: absolute; z-index: 1; inset: 0; overflow: hidden; border-radius: inherit; opacity: 0; scale: 1.04; pointer-events: none; transition: opacity var(--duration-reveal) var(--ease-soft), scale var(--duration-reveal) var(--ease-soft); }
 .participant-card__photo img { width: 100%; height: 100%; object-fit: cover; }
 .participant-card__photo::after { content: ''; position: absolute; inset: auto 0 0; height: 38%; background: linear-gradient(#112b2400, #112b24c7); }

@@ -5,7 +5,7 @@ import type { AccessRpcResult } from './access-handler.ts';
 import { boundedText } from './fetch-protocol.ts';
 import type { PromptGift } from './gift-facts.ts';
 
-export interface AssistantRpcArgs { p_participant_id:string; p_gift_id:string|null }
+export interface AssistantRpcArgs { p_participant_id:string }
 export interface AssistantLog { request_id:string; action:'gift-assistant'; status:number; duration_ms:number; model?:string; input_tokens?:number; output_tokens?:number }
 export interface AssistantDependencies {
   allowedOrigins:string[];
@@ -18,7 +18,7 @@ export interface AssistantDependencies {
 }
 const messages:Record<AssistantErrorCode|'FORBIDDEN'|'METHOD_NOT_ALLOWED',string>={
   INVALID_REQUEST:'Revisa los datos de la consulta.',
-  NOT_FOUND:'Esta persona o este regalo ya no están disponibles.',
+  NOT_FOUND:'Esta persona ya no está disponible.',
   RATE_LIMITED:'El asistente recibió muchas consultas. Espera antes de intentarlo nuevamente.',
   UNAVAILABLE:'El asistente no está disponible en este momento.',
   PROVIDER_UNAVAILABLE:'No pudimos obtener una respuesta. Inténtalo nuevamente en unos instantes.',
@@ -31,11 +31,11 @@ const limaDate=(now:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/
 const clean=(text:string)=>text.replace(/\r\n?/g,'\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u2028\u2029]/g,'').replace(/\*\*/g,'').replace(/\n{3,}/g,'\n\n').trim();
 const cut=(text:string,max:number)=>text.length>max?`${text.slice(0,max-1).trimEnd()}…`:text;
 
-function giftContext(value:unknown,giftId:string):PromptGift|null {
+function giftContext(value:unknown):(PromptGift&{position:number})|null {
   if(!value||typeof value!=='object')return null;
   const g=value as Record<string,unknown>;
-  if(g.id!==giftId||typeof g.title!=='string'||(g.gift_type!=='clothing'&&g.gift_type!=='object'))return null;
-  return {title:g.title,description:typeof g.description==='string'?g.description:null,gift_type:g.gift_type,details:g.details,
+  if(typeof g.title!=='string'||(g.gift_type!=='clothing'&&g.gift_type!=='object')||![1,2,3].includes(g.position as number))return null;
+  return {position:g.position as number,title:g.title,description:typeof g.description==='string'?g.description:null,gift_type:g.gift_type,details:g.details,
     reference_price:typeof g.reference_price==='number'&&Number.isFinite(g.reference_price)?g.reference_price:null,
     currency:typeof g.currency==='string'?g.currency:null,product_url:typeof g.product_url==='string'?g.product_url:null};
 }
@@ -78,7 +78,7 @@ export function createAssistantHandler(deps:AssistantDependencies) {
     if(!validation.ok)return fail(422,'INVALID_REQUEST');
     const input=validation.request;
     let result:AccessRpcResult;
-    try{result=await deps.callRpc({p_participant_id:input.participant_id,p_gift_id:input.gift_id});}
+    try{result=await deps.callRpc({p_participant_id:input.participant_id});}
     catch{return fail(503,'SERVER_ERROR');}
     if(result.ok!==true){
       if(result.status===429)return fail(429,'RATE_LIMITED',result.retry_after);
@@ -89,12 +89,12 @@ export function createAssistantHandler(deps:AssistantDependencies) {
     // The gift text always comes from the database, never from the browser.
     const person=result.participant as Record<string,unknown>|undefined;
     if(!person||person.id!==input.participant_id||(person.general_preferences!==null&&typeof person.general_preferences!=='string'))return fail(503,'SERVER_ERROR');
-    const gift=input.gift_id?giftContext(result.gift,input.gift_id):null;
-    if(input.gift_id&&!gift)return fail(503,'SERVER_ERROR');
+    const gifts=Array.isArray(result.gifts)&&result.gifts.length<=3?result.gifts.map(giftContext):[null];
+    if(gifts.some((gift)=>!gift))return fail(503,'SERVER_ERROR');
     let output;
     try{
-      output=await deps.provider!.generate(buildProviderInput({context:{gift,preferences:person.general_preferences as string|null},
-        message:input.message,today:limaDate(now)}),request.signal);
+      output=await deps.provider!.generate(buildProviderInput({context:{gifts:gifts as (PromptGift&{position:number})[],preferences:person.general_preferences as string|null},
+        message:input.message,history:input.history,today:limaDate(now)}),request.signal);
     }catch(error){return error instanceof ProviderError&&error.kind==='busy'?fail(429,'RATE_LIMITED',60):fail(503,'PROVIDER_UNAVAILABLE');}
     usage={model:output.model,...(output.usage?{input_tokens:output.usage.input,output_tokens:output.usage.output}:{})};
     let answer=clean(output.text);

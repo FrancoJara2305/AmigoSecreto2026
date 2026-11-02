@@ -118,3 +118,22 @@ test('personal access cannot open any administrative form or send administrative
 test('populated list and event form have accessible responsive screenshots with no credentials',async({page},info)=>{
   await organizerFixture(page);await openOrganizer(page);expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);await mkdir('artifacts/ui',{recursive:true});await page.screenshot({path:`artifacts/ui/organizer-roster-${info.project.name}.png`,fullPage:true});await page.getByRole('link',{name:'Evento',exact:true}).click();await expect(page.getByLabel('Título del evento',{exact:false})).toBeEnabled();expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);await page.screenshot({path:`artifacts/ui/organizer-event-${info.project.name}.png`,fullPage:true});expect(await page.locator('body').textContent()).not.toContain('A'.repeat(43));
 });
+
+test('with organizer access the header switches between the participants view and the panel from any page',async({page})=>{
+  await organizerFixture(page);
+  await openOrganizer(page);
+  const views=page.getByRole('navigation',{name:'Vistas de organizador'});
+  await expect(views.getByRole('link',{name:'Panel de organización'})).toHaveAttribute('aria-current','page');
+  await views.getByRole('link',{name:'Vista previa'}).click();
+  await expect(page).toHaveURL(/\/#participantes$/);
+  await expect(views.getByRole('link',{name:'Vista previa'})).toHaveAttribute('aria-current','page');
+  await views.getByRole('link',{name:'Panel de organización'}).click();
+  await expect(page).toHaveURL(/\/organizador$/);
+  await mkdir('artifacts/ui',{recursive:true});await page.screenshot({path:`artifacts/ui/organizer-switch-${test.info().project.name}.png`});
+  for(const link of await views.getByRole('link').all())expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  // Closing access returns the header to the public navigation.
+  await page.goto('/participante/melyza');
+  const close=page.getByRole('button',{name:'Cerrar acceso de edición'});
+  if(await close.count()){await close.click();await expect(views).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Navegación principal'})).toBeVisible();}
+});

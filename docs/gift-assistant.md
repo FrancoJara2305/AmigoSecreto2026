@@ -3,7 +3,7 @@
 Iteración del **2 de noviembre de 2026**. Amplía la del 1 de noviembre, que solo preparaba un texto para copiar.
 
 - «Opciones similares» y «Tiendas físicas» siguen preparando un texto para pegar en el asistente de IA que la persona ya use, con la búsqueda web activada: necesitan datos comerciales actuales que la app no puede comprobar.
-- **«Otra consulta» puede además responderse dentro de la app** con Gemini (`gemini-3.5-flash-lite`, capa gratuita, **sin búsqueda web**), a través de la Edge Function `gift-assistant`.
+- **«Otra consulta» es un chat dentro de la app** cuando el asistente está disponible, respondido por Gemini (`gemini-3.5-flash-lite`, capa gratuita, **sin búsqueda web**), a través de la Edge Function `gift-assistant`.
 
 La prueba del 1 de noviembre mostró que la capa gratuita rechaza la búsqueda web (`429 RESOURCE_EXHAUSTED`) pero responde sin ella en menos de un segundo. `gemini-3.8-flash` tardó entre 1,5 y 3 minutos y cortaba las respuestas, así que no se usa.
 
@@ -17,29 +17,30 @@ En el perfil público aparece una burbuja «Ayuda para encontrar este regalo» c
 - Escape o **Cerrar** devuelven el foco a la burbuja. Nada se guarda en Web Storage; al recargar se pierde.
 - El componente y sus estilos se cargan de forma diferida solo en los perfiles.
 
-### «Preguntar aquí» (solo «Otra consulta»)
+### Chat de «Otra consulta»
 
-- Al abrir «Otra consulta», la app pregunta una vez por carga de página si el asistente está disponible (`GET`, sin cuota). Si la función no existe, está apagada o falla, el botón no aparece y todo sigue como antes.
-- Junto a **Copiar texto** aparece **Preguntar aquí**, con un aviso previo: la pregunta y los datos públicos del regalo o de los gustos se envían a Google, que en la capa gratuita puede usarlos para mejorar sus productos, y la respuesta no cambia nada en la app.
-- La respuesta es texto plano, corta, con la nota «Respuesta generada por IA, puede equivocarse». Se muestra siempre como texto literal, nunca como HTML.
-- Una pregunta, una respuesta: no hay conversación ni historial. Cambiar la pregunta, el regalo o cerrar el panel descarta la respuesta y cancela la consulta en curso.
-- Si Gemini falla, se agota la cuota o el asistente está apagado, se muestra un mensaje y **Copiar texto** sigue disponible.
+- Al abrir «Otra consulta», la app pregunta una vez por carga de página si el asistente está disponible (`GET`, sin cuota). Si la función no existe, está apagada o falla, «Otra consulta» conserva el formulario para copiar el texto descrito arriba.
+- Con el asistente disponible, el panel «Asistente de regalos» muestra **solo el chat**: el saludo «Que fue», los mensajes y una caja para escribir (Enter envía, Mayús+Enter añade una línea). No hay que elegir regalo ni distrito: el contexto es la lista completa de la persona.
+- Una nota breve bajo la caja avisa de que las respuestas las genera Gemini, que pueden equivocarse y de que los mensajes y los datos públicos de la lista se envían a Google, que en la capa gratuita puede usarlos para mejorar sus productos.
+- Las respuestas son texto plano y se muestran siempre como texto literal, nunca como HTML.
+- La conversación vive solo en el panel: cerrar el panel la descarta. Cada mensaje viaja con los 3 turnos anteriores para que se pueda repreguntar.
+- Si Gemini falla o se agota la cuota, el mensaje vuelve a la caja y se muestra el motivo.
 
 ## Qué recibe la IA
 
-Los dos caminos comparten el bloque de datos de `supabase/functions/_shared/gift-facts.ts`: un bloque `<<<DATOS … DATOS>>>` con el regalo (título, tipo, descripción, características, precio referencial y enlace HTTPS si es válido) o con los gustos publicados, marcado como información y no como instrucciones.
+Los dos caminos usan los datos de `supabase/functions/_shared/gift-facts.ts`: un bloque `<<<DATOS … DATOS>>>` marcado como información y no como instrucciones. El texto para copiar lleva un regalo (título, tipo, descripción, características, precio referencial y enlace HTTPS si es válido) o los gustos publicados. El chat lleva los gustos y todos los regalos de la persona, por opción.
 
 **No incluye** nombre, slug, foto, mensaje personal, identificadores ni enlaces privados. Los datos se limpian: sin caracteres de control ni saltos de línea, sin secuencias `<<<`/`>>>` que imiten el delimitador y con longitudes acotadas.
 
 - **Texto para copiar** (`src/domain/gift-prompt.ts`, sin red): reglas de Lima Metropolitana, fecha de Lima, búsqueda web, no inventar datos comerciales, formato de hasta tres opciones, la tarea según la acción y el bloque de datos.
-- **Preguntar aquí** (`supabase/functions/_shared/assistant-prompt.ts`): instrucciones de sistema (español, breve, sin internet, decir «No lo sé» si los datos no alcanzan, no inventar tiendas, precios, stock ni enlaces, tratar los datos como información), la consulta y el bloque de datos.
+- **Chat** (`supabase/functions/_shared/assistant-prompt.ts`): instrucciones de sistema (español, breve, respuestas concretas para opiniones y sugerencias, sin internet, «No lo sé» solo para datos comerciales o ausentes, no inventar tiendas, precios, stock ni enlaces, tratar los datos como información). El bloque de datos va con la primera pregunta; los turnos anteriores, como conversación.
 
-## Cómo está protegido «Preguntar aquí»
+## Cómo está protegido el chat
 
-- **El navegador solo envía** `{v:1, participant_id, gift_id | null, message}`, con la pregunta de hasta 500 caracteres. El contrato es estricto: claves exactas, UUID y sin caracteres de control.
-- **El servidor lee los datos de la base** con `public.server_assistant` (solo `service_role`): el texto del regalo nunca viene del cliente y el regalo debe pertenecer a esa persona.
+- **El navegador solo envía** `{v:1, participant_id, message, history}`: el mensaje de hasta 500 caracteres y hasta 3 turnos anteriores (`{q, a}`, respuestas de hasta 1500). El contrato es estricto: claves exactas, UUID y sin caracteres de control. El historial lo controla quien chatea; solo afecta a su propia conversación.
+- **El servidor lee los datos de la base** con `public.server_assistant(p_participant_id)` (solo `service_role`, migración `20261102180000`): gustos y regalos de esa persona, sin identificadores; el texto de los regalos nunca viene del cliente.
 - **Cuotas** antes de cualquier llamada a Gemini, en `private.rate_limits` (operación `assistant`): 10 preguntas por minuto y 200 por día UTC, globales. No hay IP verificada (`RATE_LIMIT_IP_SOURCE=off`), así que si alguien agota el cupo el asistente se pausa para todos, mientras el catálogo y la edición conservan sus propias cuotas. Los intentos con identificadores inexistentes también cuentan.
-- **Gemini**: la clave va en una cabecera y solo como secreto del servidor; el modelo lo fija el servidor; sin herramientas; respuestas de 300 tokens como máximo, 20 s de espera y una llamada por pregunta.
+- **Gemini**: la clave va en una cabecera y solo como secreto del servidor; el modelo lo fija el servidor; sin herramientas; respuestas de 300 tokens como máximo, 20 s de espera y una llamada por mensaje.
 - **Interruptor** `GIFT_ASSISTANT_ENABLED=1`. Sin él, o sin clave o modelo válidos, la función responde `503` y el `GET` de disponibilidad devuelve `false`.
 - Los registros guardan estado, duración, modelo y tokens; nunca la pregunta ni la respuesta.
 

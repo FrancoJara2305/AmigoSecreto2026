@@ -54,3 +54,12 @@ export function giftDataBlock(gift: PromptGift | null, preferences: string | nul
     : ['Ámbito: gustos generales de la persona', `Gustos publicados: ${preferences?.trim() ? cleanPromptText(preferences, 1000) : 'No hay gustos publicados.'}`];
   return ['<<<DATOS', ...data, 'DATOS>>>'];
 }
+
+/** The delimited data block for the chat: the person's preferences and every saved gift. */
+export function wishlistDataBlock(preferences: string | null, gifts: (PromptGift & { position: number })[]): string[] {
+  const data = ['Ámbito: la lista de deseos completa de la persona',
+    `Gustos publicados: ${preferences?.trim() ? cleanPromptText(preferences, 1000) : 'No hay gustos publicados.'}`];
+  if (!gifts.length) data.push('Regalos guardados: ninguno.');
+  for (const gift of gifts) data.push(`Opción ${gift.position}:`, ...giftFacts(gift).map((fact) => `  ${fact}`));
+  return ['<<<DATOS', ...data, 'DATOS>>>'];
+}
