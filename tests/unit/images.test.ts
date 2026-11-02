@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { inspectImage } from '../../supabase/functions/_shared/image-inspection.ts';
+import { inspectImage, MEDIA_OUTPUT } from '../../supabase/functions/_shared/image-inspection.ts';
+import { downscale } from '../../supabase/functions/_shared/image-downscale.ts';
 import { createImageNormalizer } from '../../supabase/functions/media-upload/codec.ts';
 import { createMediaHandler } from '../../supabase/functions/_shared/media-handler.ts';
 const owner='11111111-1111-4111-8111-000000000001';
@@ -29,8 +30,24 @@ test('full decoding and metadata-free WebP recode for each codec, with gift/avat
     assert.equal(inspectImage(output).mime,'image/webp');
     assert.ok(!Buffer.from(output).includes(Buffer.from('EXIF')) && !Buffer.from(output).includes(Buffer.from('XMP ')));
     const large=await normalize(await fixture(`large.${ext}`),mime,'avatar');
-    assert.equal(inspectImage(large).width,512); assert.ok(large.length<=150000);
+    assert.equal(inspectImage(large).width,MEDIA_OUTPUT.avatar.side); assert.ok(large.length<=MEDIA_OUTPUT.avatar.max);
+    const gift=await normalize(await fixture(`large.${ext}`),mime,'gift');
+    assert.equal(Math.max(inspectImage(gift).width,inspectImage(gift).height),MEDIA_OUTPUT.gift.side); assert.ok(gift.length<=MEDIA_OUTPUT.gift.max);
   }
+});
+test('area-average downscale uses every source pixel, keeps alpha-weighted colour and never upsamples',()=>{
+  // 4x2 -> 2x1: each output pixel is the mean of its 2x2 block, not a sample of one corner.
+  const source={width:4,height:2,data:new Uint8ClampedArray([
+    0,0,0,255, 200,200,200,255, 100,0,0,255, 100,0,0,255,
+    200,200,200,255, 0,0,0,255, 100,0,0,255, 100,0,0,255])};
+  assert.deepEqual([...downscale(source,2,1)],[100,100,100,255, 100,0,0,255]);
+  // A fully transparent neighbour (black RGB) must not darken a red pixel.
+  const edge={width:2,height:1,data:new Uint8ClampedArray([255,0,0,255, 0,0,0,0])};
+  assert.deepEqual([...downscale(edge,1,1)],[255,0,0,128]);
+  // Uneven ratios still cover the whole source exactly once.
+  const odd={width:5,height:3,data:new Uint8ClampedArray(5*3*4).fill(80)};
+  assert.ok(downscale(odd,2,2).every((v)=>v===80));
+  assert.throws(()=>downscale(odd,6,3));
 });
 test('capability checked before binary body, no decoder or upload on denial',async()=>{
   let decoded=false; let uploaded=false; let args:unknown;

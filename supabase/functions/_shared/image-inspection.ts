@@ -1,6 +1,12 @@
 // Header/container checks happen BEFORE any codec allocation. Full decoding is still mandatory.
 export const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 export const MAX_IMAGE_PIXELS = 16_000_000;
+// Stored WebP per purpose: longest side, encoder size goal and hard ceiling. Avatars fill a whole
+// catalogue card on high-density phones, so 1024 px; gifts keep detail up to 1600 px.
+export const MEDIA_OUTPUT = {
+  avatar: { side: 1024, target: 250_000, max: 400_000 },
+  gift: { side: 1600, target: 400_000, max: 600_000 },
+} as const;
 export type ImageInfo = { mime: 'image/jpeg' | 'image/png' | 'image/webp'; width: number; height: number };
 export class ImageValidationError extends Error { constructor() { super('INVALID_IMAGE'); } }
 const invalid = (): never => { throw new ImageValidationError(); };

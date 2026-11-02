@@ -254,7 +254,7 @@ Para archivos subidos, el servidor:
 5. Recodifica a WebP y guarda un objeto nuevo con una ruta generada por el servidor.
 6. Permite asociarlo al perfil o regalo cuando se confirma el formulario.
 
-Se aceptan JPEG, PNG y WebP estáticas, con límites de entrada de 3 MiB y 16 millones de píxeles. Las salidas se reducen a un lado mayor de hasta 512 px para avatar y 1200 px para regalo, sin ampliar imágenes pequeñas. Los códecs se incluyeron con sus licencias y hashes; se ejecutan mediante WebAssembly en la función de imágenes.
+Se aceptan JPEG, PNG y WebP estáticas, con límites de entrada de 3 MiB y 16 millones de píxeles. Las salidas se reducen a un lado mayor de hasta 1024 px para avatar y 1600 px para regalo, sin ampliar imágenes pequeñas. Los códecs se incluyeron con sus licencias y hashes; se ejecutan mediante WebAssembly en la función de imágenes.
 
 **WebAssembly**, en este caso, permite ejecutar los códecs preparados para ese formato dentro del runtime. No significa que el navegador sea la autoridad que normaliza o autoriza el archivo.
 

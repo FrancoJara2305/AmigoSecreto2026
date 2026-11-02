@@ -10,7 +10,7 @@ Al elegir una foto válida en el perfil (participante u organizador) se abre **A
 - acercar o alejar con el control deslizante, los botones de lupa, la rueda del mouse o las teclas `+` y `−`, hasta 4×;
 - **Centrar** vuelve al cuadrado central y **Cancelar** o Escape cierran sin subir nada; el foco vuelve al selector.
 
-**Usar esta foto** recorta el cuadrado en el navegador (hasta 512 px, el tamaño final del avatar) y lo envía como JPEG sin metadatos. El servidor no cambia: sigue validando y normalizando a WebP. Si el archivo no pasa la comprobación local (tipo, tamaño, animación) se muestra el mensaje habitual sin abrir el ajuste ni enviar nada. Si el navegador no puede mostrarla, el diálogo ofrece subirla sin ajustar.
+**Usar esta foto** recorta el cuadrado en el navegador (hasta 1024 px, el tamaño final del avatar) y lo envía como JPEG sin metadatos. El servidor no cambia: sigue validando y normalizando a WebP. Si el archivo no pasa la comprobación local (tipo, tamaño, animación) se muestra el mensaje habitual sin abrir el ajuste ni enviar nada. Si el navegador no puede mostrarla, el diálogo ofrece subirla sin ajustar.
 
 El cálculo vive en `src/domain/photo-crop.ts` (función pura) y el diálogo en `src/components/editor/PhotoCropDialog.tsx`, montado fuera del formulario para que un formulario deshabilitado no deshabilite sus botones.
 

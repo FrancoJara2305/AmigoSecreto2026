@@ -1,7 +1,10 @@
+import { MEDIA_OUTPUT } from '../../supabase/functions/_shared/image-inspection.ts';
+
 // Square crop for profile photos, in the image's natural pixels. x/y is the centre of the crop.
 export type CropView = { width: number; height: number; zoom: number; x: number; y: number };
 export const MAX_ZOOM = 4;
-export const AVATAR_SIZE = 512;
+// Matches the stored avatar size, so the server never has to resize the cropped square again.
+export const AVATAR_SIZE = MEDIA_OUTPUT.avatar.side;
 
 export const cropSide = ({ width, height, zoom }: CropView) => Math.min(width, height) / zoom;
 export const centredCrop = (width: number, height: number): CropView => ({ width, height, zoom: 1, x: width / 2, y: height / 2 });

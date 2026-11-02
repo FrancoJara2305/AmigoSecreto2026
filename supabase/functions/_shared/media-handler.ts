@@ -1,5 +1,5 @@
 import { hashToken, isToken } from './tokens.ts';
-import { ImageValidationError, inspectImage, MAX_IMAGE_BYTES } from './image-inspection.ts';
+import { ImageValidationError, inspectImage, MAX_IMAGE_BYTES, MEDIA_OUTPUT } from './image-inspection.ts';
 export interface MediaRpcArgs { p_action: 'reserve'|'complete'; p_token_hash: string; p_participant_id: string; p_purpose: 'gift'|'avatar'; p_path?: string; p_size?: number }
 export interface MediaRpcResult { ok: boolean; path?: string; status?: number; error?: string; retry_after?: number }
 export interface MediaDependencies {
@@ -61,7 +61,7 @@ export function createMediaHandler(deps: MediaDependencies) {
       inspectImage(bytes,mime);
       const normalized=await deps.normalize(bytes,mime,purpose);
       const output=inspectImage(normalized,'image/webp');
-      if (Math.max(output.width,output.height)>(purpose==='gift'?1200:512) || normalized.length>(purpose==='gift'?400_000:150_000)) return fail(422,'INVALID_IMAGE');
+      if (Math.max(output.width,output.height)>MEDIA_OUTPUT[purpose].side || normalized.length>MEDIA_OUTPUT[purpose].max) return fail(422,'INVALID_IMAGE');
       await deps.upload(path,normalized);
       // Re-authorize after CPU/Storage I/O. Failures remain pending for safe cleanup.
       const complete=await deps.rpc({p_action:'complete',p_token_hash:hash,p_participant_id:participant,p_purpose:purpose,p_path:path,p_size:normalized.length});

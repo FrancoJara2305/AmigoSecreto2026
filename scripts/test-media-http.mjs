@@ -54,7 +54,7 @@ try {
     const object=await fetch(`${base}/storage/v1/object/public/wishlist-media/${result.data.path}`);
     assert.equal(object.status,200);
     const bytes=new Uint8Array(await object.arrayBuffer()); const info=inspectImage(bytes,'image/webp');
-    assert.equal(Math.max(info.width,info.height),purpose==='gift'?1200:96);
+    assert.equal(Math.max(info.width,info.height),purpose==='gift'?1600:96);
     assert.equal(sql(`select upload_complete and state='pending' from private.media_assets where storage_path='${result.data.path}';`),'t');
     assert.ok(!Buffer.from(bytes).includes(Buffer.from('EXIF')));
     console.log(`${file} -> ${purpose}: ${info.width}x${info.height}, ${bytes.length} bytes, ${result.ms} ms HTTP local.`);

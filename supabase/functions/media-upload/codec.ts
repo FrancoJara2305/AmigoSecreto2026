@@ -9,7 +9,8 @@ import encoderFactory from './vendor/webp/codec/enc/webp_enc.js';
 import pngInit, { decode as pngDecode, releaseCodec } from './vendor/png/codec/pkg/squoosh_png.js';
 // @ts-ignore Upstream option defaults.
 import { defaultOptions } from './vendor/webp/meta.js';
-import { inspectImage, ImageValidationError } from '../_shared/image-inspection.ts';
+import { inspectImage, ImageValidationError, MEDIA_OUTPUT } from '../_shared/image-inspection.ts';
+import { downscale } from '../_shared/image-downscale.ts';
 
 type Pixels = { data: Uint8ClampedArray; width: number; height: number };
 type Decoder = { decode(bytes: Uint8Array, preserveOrientation?: boolean): Pixels | null };
@@ -44,29 +45,17 @@ export function createImageNormalizer(read: (url: URL) => Promise<Uint8Array>) {
       }
       if (!decoded || !((decoded.width===header.width && decoded.height===header.height) ||
         (mime==='image/jpeg' && decoded.width===header.height && decoded.height===header.width)) || decoded.data.length !== header.width * header.height * 4) throw new ImageValidationError();
-      const longest = purpose === 'gift' ? 1200 : 512;
-      const scale = Math.min(1,longest/Math.max(decoded.width,decoded.height));
+      const limits = MEDIA_OUTPUT[purpose];
+      const scale = Math.min(1,limits.side/Math.max(decoded.width,decoded.height));
       const width = Math.max(1,Math.round(decoded.width*scale)); const height = Math.max(1,Math.round(decoded.height*scale));
-      let data = decoded.data;
-      if (scale < 1) {
-        // Bilinear resize, bounded to <=1.44 MP. Original decoded buffer is never encoded as-is.
-        data = new Uint8ClampedArray(width*height*4);
-        for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
-          const sx=(x+.5)*decoded.width/width-.5, sy=(y+.5)*decoded.height/height-.5;
-          const x0=Math.max(0,Math.floor(sx)), y0=Math.max(0,Math.floor(sy));
-          const x1=Math.min(decoded.width-1,x0+1), y1=Math.min(decoded.height-1,y0+1);
-          const dx=Math.max(0,sx-x0), dy=Math.max(0,sy-y0);
-          for (let c=0;c<4;c++) data[(y*width+x)*4+c] =
-            decoded.data[(y0*decoded.width+x0)*4+c]*(1-dx)*(1-dy) + decoded.data[(y0*decoded.width+x1)*4+c]*dx*(1-dy) +
-            decoded.data[(y1*decoded.width+x0)*4+c]*(1-dx)*dy + decoded.data[(y1*decoded.width+x1)*4+c]*dx*dy;
-        }
-      }
+      // Original decoded buffer is never encoded as-is.
+      const data = scale < 1 ? downscale(decoded, width, height) : decoded.data;
       decoded = null;
       const encoder: Encoder=await encoderFactory(await options('webp/codec/enc/webp_enc.wasm'));
-      const output = encoder.encode(data,width,height,{ ...defaultOptions, quality: 76, method: 2, target_size: purpose === 'gift' ? 250_000 : 100_000, low_memory: 1 });
+      const output = encoder.encode(data,width,height,{ ...defaultOptions, quality: 82, method: 2, target_size: limits.target, low_memory: 1 });
       if (!output) throw new ImageValidationError();
       // Hard output ceiling; target_size is an encoder goal, not a safety guarantee.
-      if (output.byteLength > (purpose === 'gift' ? 400_000 : 150_000)) throw new ImageValidationError();
+      if (output.byteLength > limits.max) throw new ImageValidationError();
       inspectImage(output,'image/webp');
       return new Uint8Array(output);
     } finally { active = false; }

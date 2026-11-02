@@ -8,7 +8,7 @@ Abre tu enlace privado local original y pulsa **Editar mi perfil**. El organizad
 
 El formulario permite:
 
-- Subir una foto JPEG, PNG o WebP estática, de hasta 3 MiB y 16 megapíxeles. Antes de subirla se puede encuadrar y acercar en el círculo ([detalle](photo-editing-polish.md)). El servidor valida y normaliza a WebP de máximo 512 px para avatar. La vista previa local no guarda el perfil.
+- Subir una foto JPEG, PNG o WebP estática, de hasta 3 MiB y 16 megapíxeles. Antes de subirla se puede encuadrar y acercar en el círculo ([detalle](photo-editing-polish.md)). El servidor valida y normaliza a WebP de máximo 1024 px para avatar. La vista previa local no guarda el perfil.
 - Usar una URL HTTPS de foto, revisarla con **Ver foto**, conservar la foto guardada o elegir una de las seis ilustraciones existentes. La foto es opcional. Una URL rota muestra la ilustración de respaldo.
 - Escribir un mensaje personal de hasta 500 caracteres y gustos/consideraciones generales de hasta 2000. Ambos son opcionales; vaciarlos los elimina al guardar. El texto es plano y será público. Las pistas específicas de un regalo siguen en su propia opción.
 
@@ -40,7 +40,7 @@ El runner rechaza reemplazar funciones ya abiertas. Inicia su propio Edge Runtim
 
 Comprueba con navegador, Edge, Storage y PostgreSQL reales:
 
-1. Subir JPEG de 16 MP y comprobar WebP de hasta 512 px; reserva pendiente sin cambiar el perfil antes de guardar.
+1. Subir JPEG de 16 MP y comprobar WebP de hasta 1024 px; reserva pendiente sin cambiar el perfil antes de guardar.
 2. Guardar mensaje/preferencias/foto y comprobar la asociación en SQL.
 3. Reemplazar por PNG, conservando la foto vigente hasta confirmar; la anterior pasa a pendiente de limpieza.
 4. Elegir ilustración y guardar, desvinculando la segunda foto; regalo de prueba intacto, incluidos UUID/versión/detalles.

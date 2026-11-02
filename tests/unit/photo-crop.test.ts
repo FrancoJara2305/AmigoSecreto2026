@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { centredCrop, clampCrop, cropRect, cropStyle, MAX_ZOOM, panCrop } from '../../src/domain/photo-crop.ts';
 
 test('a new crop is the centred square of the short side', () => {
-  assert.deepEqual(cropRect(centredCrop(4000, 3000)), { sx: 500, sy: 0, side: 3000, size: 512 });
+  assert.deepEqual(cropRect(centredCrop(4000, 3000)), { sx: 500, sy: 0, side: 3000, size: 1024 });
   assert.deepEqual(cropRect(centredCrop(96, 64)), { sx: 16, sy: 0, side: 64, size: 64 });
   assert.deepEqual(cropStyle(centredCrop(400, 200)), { width: '200%', height: '100%', left: '-50%', top: '0%' });
 });
