@@ -13,7 +13,7 @@ import { usePrivateAccess } from '../app/PrivateAccessProvider';
 import { scopeCanEdit } from '../domain/private-access';
 import { PrivateProfileControls } from '../components/access/PrivateProfileControls';
 
-// Prompt helper code and styles load only on profile pages, after the profile is ready.
+// Assistant code and styles load only on profile pages, after the profile is ready.
 const GiftAssistant = lazy(() => import('../components/assistant/GiftAssistant').then((module) => ({ default: module.GiftAssistant })));
 
 export function ParticipantProfilePage() {

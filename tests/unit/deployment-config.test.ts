@@ -47,6 +47,8 @@ test('environment templates bind frontend, Edge and signed callback to the same 
     RATE_LIMIT_IP_SOURCE:'off',RATE_LIMIT_HMAC_SECRET:'REPLACE_UNUSED_WHILE_IP_SOURCE_OFF',
     FETCH_PROXY_URL:'https://staging.example.com/api/fetch-product',
     FETCH_PROXY_HMAC_SECRET:'REPLACE_UNIQUE_32_BYTE_BASE64URL_SHARED_WITH_PROXY',APP_LOCAL_FETCH_PROXY:'0',
+    GIFT_ASSISTANT_ENABLED:'0',GIFT_ASSISTANT_PROVIDER:'gemini',
+    GEMINI_API_KEY:'REPLACE_UNIQUE_SERVER_ONLY_KEY_FOR_THIS_ENVIRONMENT',GEMINI_MODEL:'gemini-3.5-flash-lite',
   });
   assert.deepEqual(env('fetch-proxy.env.example'),{
     FETCH_PROXY_HMAC_SECRET:env('edge.env.example').FETCH_PROXY_HMAC_SECRET,

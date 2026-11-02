@@ -26,6 +26,9 @@ export function deploymentEnvironmentTemplates(supabaseUrl:string,appUrl:string)
       `FETCH_PROXY_URL=${app}/api/fetch-product`,
       'FETCH_PROXY_HMAC_SECRET=REPLACE_UNIQUE_32_BYTE_BASE64URL_SHARED_WITH_PROXY',
       'APP_LOCAL_FETCH_PROXY=0',
+      // Assistant stays off until approved per environment; the synthetic provider is refused on hosted Edge.
+      'GIFT_ASSISTANT_ENABLED=0','GIFT_ASSISTANT_PROVIDER=gemini',
+      'GEMINI_API_KEY=REPLACE_UNIQUE_SERVER_ONLY_KEY_FOR_THIS_ENVIRONMENT','GEMINI_MODEL=gemini-3.5-flash-lite',
     ].join('\n')+'\n',
     'fetch-proxy.env.example':[
       'FETCH_PROXY_HMAC_SECRET=REPLACE_UNIQUE_32_BYTE_BASE64URL_SHARED_WITH_PROXY',

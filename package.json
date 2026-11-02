@@ -47,6 +47,7 @@
     "test:recovery:local": "node scripts/test-admin-local.mjs --recovery",
     "test:import:concurrency": "node scripts/test-import-concurrency.mjs",
     "probe:edge:network": "node scripts/probe-edge-network.mjs",
+    "probe:gemini": "node --env-file=.env scripts/probe-gemini.mjs",
     "fetch-proxy:local": "node --env-file=server/product-fetch/.env.local scripts/serve-product-fetch-local.mjs",
     "cleanup:local": "node scripts/cleanup-media-local.mjs",
     "cleanup:rates:local": "node scripts/cleanup-rate-limits-local.mjs",

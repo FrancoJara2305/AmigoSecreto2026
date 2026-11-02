@@ -74,3 +74,10 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/media-upload/index.ts"
 static_files = ["./functions/media-upload/vendor/**/*.wasm"]
+
+# Public gift assistant: no capability, so it validates origin, contract and private global quotas
+# itself before any provider call. Unavailable unless enabled and configured.
+[functions.gift-assistant]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/gift-assistant/index.ts"

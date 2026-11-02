@@ -37,7 +37,15 @@
 .assistant-compose { display: grid; gap: .85rem; }
 .assistant-prompt__text { min-height: 168px; font: .78rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; background: var(--surface-raised); }
 .assistant-note { color: var(--muted); font-size: .78rem; line-height: 1.55; }
-.assistant-compose > .button { justify-self: end; }
+.assistant-actions { display: flex; flex-wrap: wrap; justify-content: end; gap: .5rem; }
+.assistant-actions .button[aria-disabled="true"] { opacity: .6; cursor: progress; }
+.assistant-reply:empty { display: none; }
+.assistant-reply__loading { display: flex; align-items: center; gap: .45rem; }
+.assistant-reply__loading svg { width: 16px; height: 16px; }
+/* Model text is rendered as a literal string: line breaks kept, never HTML. */
+.assistant-answer { display: grid; gap: .5rem; padding: .85rem 1rem; border: 1px solid var(--border-soft); border-radius: var(--radius-control); background: var(--surface-raised); }
+.assistant-answer__text { font-size: .9rem; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+.assistant-answer__meta { color: var(--muted); font-size: .75rem; }
 .assistant-intents { display: flex; flex-wrap: wrap; gap: .4rem; }
 .assistant-intent { display: inline-flex; align-items: center; gap: .45rem; min-height: 44px; padding: .45rem .75rem; border: 1px solid var(--border-soft); border-radius: 999px; background: var(--surface-raised); font-size: .8rem; font-weight: 600; cursor: pointer; }
 .assistant-intent:has(input:checked) { border-color: var(--color-forest); background: #e8eddf; }

@@ -19,7 +19,8 @@ for(const file of files){const text=await readFile(file,'utf8');
 }
 const expected={
   '.env.example':['VITE_SUPABASE_URL','VITE_SUPABASE_PUBLISHABLE_KEY','VITE_APP_URL'],
-  'supabase/functions/.env.example':['APP_ALLOWED_ORIGINS','APP_BASE_URL','RATE_LIMIT_IP_SOURCE','RATE_LIMIT_HMAC_SECRET','FETCH_PROXY_URL','FETCH_PROXY_HMAC_SECRET','APP_LOCAL_FETCH_PROXY'],
+  'supabase/functions/.env.example':['APP_ALLOWED_ORIGINS','APP_BASE_URL','RATE_LIMIT_IP_SOURCE','RATE_LIMIT_HMAC_SECRET','FETCH_PROXY_URL','FETCH_PROXY_HMAC_SECRET','APP_LOCAL_FETCH_PROXY',
+    'GIFT_ASSISTANT_ENABLED','GIFT_ASSISTANT_PROVIDER','GEMINI_API_KEY','GEMINI_MODEL'],
   'server/product-fetch/.env.example':['FETCH_PROXY_HMAC_SECRET','FETCH_PROXY_CALLBACK_URL'],
 };
 for(const [file,keys] of Object.entries(expected)){

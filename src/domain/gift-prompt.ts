@@ -1,7 +1,7 @@
 import type { Gift } from './database.types.ts';
-import { displayPrice, giftDetails, safeExternalUrl } from './profile.ts';
+import { cleanPromptText, giftDataBlock } from '../../supabase/functions/_shared/gift-facts.ts';
 
-// Builds a ready-to-paste request for the person's own AI assistant. The app never calls a model:
+// Builds a ready-to-paste request for the person's own AI assistant. Nothing is sent from here:
 // the text only uses public profile data, never names, photos, slugs, ids or private links.
 export type PromptIntent = 'similar' | 'stores' | 'other';
 export type PromptGift = Pick<Gift, 'title' | 'description' | 'gift_type' | 'details' | 'reference_price' | 'currency' | 'product_url'>;
@@ -17,30 +17,11 @@ const questions: Record<Exclude<PromptIntent, 'other'>, string> = {
   stores: '¿Qué tiendas físicas en Lima tienen este producto?',
 };
 
-// Collapses whitespace (\s includes U+2028/U+2029), strips control characters and delimiter runs
-// so pasted data stays on its own line inside the DATOS block.
-function clean(value: string, limit: number): string {
-  return value.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/<{3,}|>{3,}/g, ' ').replace(/\s+/g, ' ').trim().slice(0, limit);
-}
-function giftFacts(gift: PromptGift): string[] {
-  const facts = [`Producto: ${clean(gift.title, 200)}`, `Tipo: ${gift.gift_type === 'clothing' ? 'Ropa o calzado' : 'Objeto'}`];
-  if (gift.description) facts.push(`Descripción: ${clean(gift.description, 1000)}`);
-  for (const { label, value } of giftDetails(gift)) facts.push(`${label}: ${clean(value, 300)}`);
-  const price = displayPrice(gift.reference_price, gift.currency);
-  if (price) facts.push(`Precio referencial: ${price}`);
-  const link = safeExternalUrl(gift.product_url);
-  if (link) facts.push(`Enlace de referencia: ${link}`);
-  return facts;
-}
-
 export function buildGiftPrompt(input: { intent: PromptIntent; gift: PromptGift | null; preferences: string | null; district: string; message: string; today: string }): string {
-  const district = clean(input.district, PROMPT_LIMITS.district);
+  const district = cleanPromptText(input.district, PROMPT_LIMITS.district);
   const message = input.message.trim().slice(0, PROMPT_LIMITS.message);
   const place = district ? `${district}, Lima Metropolitana, Perú` : 'Lima Metropolitana, Perú';
   const question = input.intent === 'other' ? message : message ? `${questions[input.intent]}\nDetalle adicional: ${message}` : questions[input.intent];
-  const data = input.gift
-    ? ['Ámbito: un regalo concreto de la lista', ...giftFacts(input.gift)]
-    : ['Ámbito: gustos generales de la persona', `Gustos publicados: ${input.preferences?.trim() ? clean(input.preferences, 1000) : 'No hay gustos publicados.'}`];
   return [
     'Ayúdame a encontrar un regalo para un intercambio en Lima, Perú. Responde en español, de forma breve.',
     '',
@@ -55,9 +36,7 @@ export function buildGiftPrompt(input: { intent: PromptIntent; gift: PromptGift 
     '',
     `Consulta: ${question}`,
     '',
-    '<<<DATOS',
-    ...data,
-    'DATOS>>>',
+    ...giftDataBlock(input.gift, input.preferences),
   ].join('\n');
 }
 

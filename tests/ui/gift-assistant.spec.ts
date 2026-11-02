@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { test,expect,type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-// Synthetic profiles only. The helper prepares text to copy; it never calls an AI service or an Edge Function.
+// Synthetic profiles only. Copy-only actions never call an AI service or an Edge Function; "Preguntar aquí" uses a simulated one.
 const owner='11111111-1111-4111-8111-000000000001',other='11111111-1111-4111-8111-000000000002';
 const cors={'Access-Control-Allow-Origin':uiOrigin,'Cache-Control':'no-store'};
 const baseGift={description:null,image_path:null,image_url:null,product_url:null,reference_price:null,currency:'PEN',gift_type:'object',details:{},version:1,created_at:'',updated_at:''};
@@ -121,4 +121,84 @@ test('a single saved gift is selected automatically and the panel fits narrow sc
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   for(const button of await panel(page).getByRole('button').all()){const b=(await button.boundingBox())!;expect(b.height).toBeGreaterThanOrEqual(44);}
   expect((await axe(page)).violations).toEqual([]);
+});
+
+// "Preguntar aquí": the Edge Function is simulated; the answer must stay literal text.
+async function assistantApi(page:Page,options:{available:boolean;reply?:(body:Record<string,unknown>)=>{status:number;json:unknown;headers?:Record<string,string>}}) {
+  const posts:Record<string,unknown>[]=[];
+  await page.route(`${api}/functions/v1/gift-assistant`,async(route)=>{
+    const request=route.request();
+    if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{...cors,'Access-Control-Allow-Methods':'GET, POST','Access-Control-Allow-Headers':'content-type, apikey'}});
+    expect(request.headers()['x-edit-token']).toBeUndefined();
+    if(request.method()==='GET')return route.fulfill({json:{available:options.available},headers:cors});
+    const body=request.postDataJSON();posts.push(body);
+    const result=options.reply?.(body)??{status:200,json:{answer:'Hola'}};
+    return route.fulfill({status:result.status,json:result.json,headers:{...cors,'Access-Control-Expose-Headers':'Retry-After',...result.headers}});
+  });
+  return posts;
+}
+
+test('"Otra consulta" can be answered here as literal text after a disclosure, and any change discards the answer',async({page},info)=>{
+  await profiles(page);
+  const posts=await assistantApi(page,{available:true,reply:()=>({status:200,json:{answer:'<b>Prueba</b> un tono suave.\n- Una taza de cerámica'}})});
+  await page.goto('/participante/melyza');
+  await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
+  const ask=panel(page).getByRole('button',{name:'Preguntar aquí'});
+  await expect(ask).toBeDisabled();
+  await panel(page).getByLabel('Opción 3 · Zapatillas cómodas').check();
+  await panel(page).getByLabel('Tu consulta').fill('¿Qué color le quedaría mejor?');
+  await expect(panel(page).getByText(/tu pregunta y los datos públicos de este regalo se envían a Google Gemini/)).toBeVisible();
+  await expect(panel(page).getByRole('button',{name:'Copiar texto'})).toBeEnabled();
+  await ask.click();
+  const answer=panel(page).getByRole('group',{name:'Respuesta del asistente'});
+  await expect(answer).toContainText('<b>Prueba</b> un tono suave.');
+  await expect(answer.locator('b')).toHaveCount(0);
+  await expect(ask).toBeFocused();
+  await expect(answer).toContainText('Respuesta generada por IA, puede equivocarse.');
+  expect(posts).toEqual([{v:1,participant_id:owner,gift_id:'22222222-2222-4222-8222-000000000003',message:'¿Qué color le quedaría mejor?'}]);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  expect((await axe(page)).violations).toEqual([]);
+  await mkdir('artifacts/ui',{recursive:true});
+  await page.screenshot({path:`artifacts/ui/assistant-answer-${info.project.name}.png`});
+  await panel(page).getByLabel('Tu consulta').fill('¿Y qué talla?');
+  await expect(answer).toHaveCount(0);
+  await panel(page).getByLabel('Gustos generales de esta persona').check();
+  await expect(panel(page).getByText(/los datos públicos de sus gustos se envían/)).toBeVisible();
+  await ask.click();await expect(answer).toBeVisible();
+  expect(posts[1]).toEqual({v:1,participant_id:owner,gift_id:null,message:'¿Y qué talla?'});
+  await page.keyboard.press('Escape');await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
+  await expect(answer).toHaveCount(0);
+  expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
+});
+
+test('a switched-off assistant hides "Preguntar aquí" and failures keep "Copiar texto" available',async({page})=>{
+  await profiles(page);await clipboard(page);
+  await assistantApi(page,{available:false});
+  await page.goto('/participante/melyza');
+  await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
+  await panel(page).getByLabel('Gustos generales de esta persona').check();
+  await panel(page).getByLabel('Tu consulta').fill('¿Algo pequeño?');
+  await expect(panel(page).getByRole('button',{name:'Copiar texto'})).toBeEnabled();
+  await expect(panel(page).getByRole('button',{name:'Preguntar aquí'})).toHaveCount(0);
+
+  await page.unroute(`${api}/functions/v1/gift-assistant`);
+  const cases:[{status:number;json:unknown;headers?:Record<string,string>},RegExp][]=[
+    [{status:429,json:{error:{code:'RATE_LIMITED'}},headers:{'Retry-After':'3600'}},/límite de consultas por hoy/],
+    [{status:429,json:{error:{code:'RATE_LIMITED'}},headers:{'Retry-After':'30'}},/Espera un minuto/],
+    [{status:503,json:{error:{code:'PROVIDER_UNAVAILABLE'}}},/No pudimos obtener una respuesta/],
+  ];
+  for(const [reply,text] of cases){
+    await page.unroute(`${api}/functions/v1/gift-assistant`);
+    await assistantApi(page,{available:true,reply:()=>reply});
+    await page.reload();
+    await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
+    await panel(page).getByLabel('Gustos generales de esta persona').check();
+    await panel(page).getByLabel('Tu consulta').fill('¿Algo pequeño?');
+    await panel(page).getByRole('button',{name:'Preguntar aquí'}).click();
+    await expect(panel(page).getByRole('alert')).toContainText(text);
+    await expect(panel(page).getByRole('alert')).toContainText('Puedes copiar el texto');
+    await expect(panel(page).getByRole('group',{name:'Respuesta del asistente'})).toHaveCount(0);
+    await panel(page).getByRole('button',{name:'Copiar texto'}).click();
+    await expect(page.getByText('Texto copiado',{exact:true})).toBeVisible();
+  }
 });
