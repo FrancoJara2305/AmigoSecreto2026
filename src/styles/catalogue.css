@@ -48,12 +48,25 @@
 /* Out of flow so a non-square photo can never size the grid track: the circle always shows a centred 1:1 part. */
 .participant-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .participant-avatar__initials { font: 400 2rem/1 var(--font-display); }
+/* Cards with a photo: at rest only the name; revealed, the photo covers the whole card and the name fades out.
+   Revealed = hover/keyboard focus with a mouse, or crossing the middle of the screen on touch devices (data-revealed). */
+.participant-card--photo .participant-card__name { top: 50%; transition: opacity var(--duration-reveal) var(--ease-soft), top var(--duration-reveal) var(--ease-soft); }
+.participant-card__photo { position: absolute; z-index: 1; inset: 0; overflow: hidden; border-radius: inherit; opacity: 0; scale: 1.04; pointer-events: none; transition: opacity var(--duration-reveal) var(--ease-soft), scale var(--duration-reveal) var(--ease-soft); }
+.participant-card__photo img { width: 100%; height: 100%; object-fit: cover; }
+.participant-card__photo::after { content: ''; position: absolute; inset: auto 0 0; height: 38%; background: linear-gradient(#112b2400, #112b24c7); }
+.participant-card--photo :is(.participant-card__number, .participant-card__corner, .participant-card__bottom) { z-index: 2; transition: opacity var(--duration-reveal) var(--ease-soft), color var(--duration-reveal) var(--ease-soft), border-color var(--duration-reveal) var(--ease-soft); }
+.participant-card--photo[data-revealed] .participant-card__photo { opacity: 1; scale: 1; }
+.participant-card--photo[data-revealed] .participant-card__name, .participant-card--photo[data-revealed] :is(.participant-card__number, .participant-card__corner) { opacity: 0; }
+.participant-card--photo[data-revealed] .participant-card__bottom, .participant-card--photo[data-revealed] .participant-card__bottom svg { color: var(--color-ivory); border-color: #fffaf266; }
 @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .participant-card--photo:is(:hover, :focus-visible) .participant-card__photo { opacity: 1; scale: 1; }
+  .participant-card--photo:is(:hover, :focus-visible) .participant-card__name, .participant-card--photo:is(:hover, :focus-visible) :is(.participant-card__number, .participant-card__corner) { opacity: 0; }
+  .participant-card--photo:is(:hover, :focus-visible) .participant-card__bottom, .participant-card--photo:is(:hover, :focus-visible) .participant-card__bottom svg { color: var(--color-ivory); border-color: #fffaf266; }
   .participant-card__avatar { opacity: 0; scale: .94; }
   .participant-card__name { top: 50%; }
   .participant-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px #173e3210; }
   .participant-card:is(:hover, :focus-visible) .participant-card__avatar { opacity: 1; scale: 1; }
-  .participant-card:is(:hover, :focus-visible) .participant-card__name { top: 70%; }
+  .participant-card:not(.participant-card--photo):is(:hover, :focus-visible) .participant-card__name { top: 70%; }
 }
 .participant-skeleton { aspect-ratio: 1; min-height: 280px; border-radius: var(--radius-card); }
 .catalogue-error { display: grid; justify-items: start; gap: 1rem; padding-block: 1.5rem; min-height: 260px; }

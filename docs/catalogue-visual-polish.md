@@ -10,6 +10,14 @@ La prueba de navegador mostró que solicitar el scroll nativo `smooth` podía pr
 
 La tarjeta mantiene ancho explícito y altura mínima en rem para adaptarse al texto ampliado. La regresión verificó que no se introduce desbordamiento horizontal a 320 px o con fuente al 200 %.
 
+## Tarjetas con foto
+
+Ajuste del **1 de noviembre de 2026**. Si la persona tiene foto, la tarjeta en reposo muestra solo el nombre centrado. Al revelarse, la foto cubre **toda la tarjeta** (recortada, sin deformarse), el nombre, el número y la estrella se desvanecen, y «x de 3 ideas» queda en marfil sobre un degradado oscuro. Las tarjetas con ilustración conservan el círculo de antes.
+
+- **Con mouse** (escritorio desde 1024 px): al pasar el mouse o enfocar con teclado, igual que antes.
+- **Pantallas táctiles** (celular y tableta): no hay hover, así que la foto aparece sola cuando la tarjeta cruza la franja central de la pantalla al desplazarse (`IntersectionObserver`, franja del 10 % central) y vuelve al nombre al salir. No requiere gestos nuevos y un toque sigue abriendo el perfil. En tableta se revelan juntas las tarjetas de la misma fila.
+- Si la foto no carga, la tarjeta usa la ilustración elegida. Con movimiento reducido el cambio es inmediato.
+
 ## Comprobaciones
 
 - **30/30 casos UI** de catálogo correctos en escritorio, tableta y móvil: centrado, revelado por mouse/teclado, toque, navegación, desplazamiento gradual observado, foco, movimiento reducido, reflujo, errores y accesibilidad automática.

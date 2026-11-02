@@ -158,19 +158,50 @@ test('a stored photo that cannot be read shows a message and changes nothing',as
   expect(state.uploads).toHaveLength(0);expect(state.writes).toHaveLength(0);
 });
 
-test('portrait photos in the catalogue and organizer roster stay inside a 1:1 circle',async({page,hasTouch})=>{
+test('portrait photos in the organizer roster stay inside a 1:1 circle',async({page})=>{
   const url='https://photos.example.com/tall.png';
-  await page.route(url,(route)=>route.fulfill({body:tall,contentType:'image/png'}));
-  await page.route(`${apiOrigin}/rest/v1/participants?**`,(route)=>new URL(route.request().url()).searchParams.has('slug')?route.fallback():route.fulfill({
-    json:[{id:fixtureOwner,name:'Alice',slug:'alice',photo_path:null,photo_url:url,avatar_key:'star',display_order:0,gifts:[{count:0}]}],headers:{'Access-Control-Allow-Origin':uiOrigin}}));
-  await page.goto('/');
-  const card=page.getByRole('list',{name:'Participantes',exact:true}).getByRole('listitem').first();
-  if(!hasTouch)await card.getByRole('link').hover();
-  await expectSquareCircle(card.locator('.participant-avatar img'));
-  await page.unroute(`${apiOrigin}/rest/v1/participants?**`);
   const {state}=await organizerFixture(page);state.people[0].photo_url=url;
   // Registered after the fixture so it wins over the fixture's catch-all routes.
   await page.route(url,(route)=>route.fulfill({body:tall,contentType:'image/png'}));
   await openOrganizer(page);
   await expectSquareCircle(page.locator('.admin-person__identity .participant-avatar img').first());
+});
+
+test('catalogue photo cards swap the name for a full-card photo on hover, focus or the middle of a touch screen',async({page,hasTouch},info)=>{
+  const url='https://photos.example.com/tall.png';
+  await page.route(url,(route)=>route.fulfill({body:tall,contentType:'image/png'}));
+  const person=(n:number,name:string,photo:boolean)=>({id:`11111111-1111-4111-8111-00000000000${n}`,name,slug:name.toLowerCase(),photo_path:null,photo_url:photo?url:null,avatar_key:'star',display_order:n,gifts:[{count:0}]});
+  await page.route(`${apiOrigin}/rest/v1/participants?**`,(route)=>new URL(route.request().url()).searchParams.has('slug')?route.fallback():route.fulfill({
+    json:[person(1,'Alice',true),person(2,'Bruno',false),person(3,'Carla',true),person(4,'Dario',false)],headers:{'Access-Control-Allow-Origin':uiOrigin}}));
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/');
+  const cards=page.getByRole('list',{name:'Participantes',exact:true}).getByRole('link');
+  await expect(cards).toHaveCount(4);
+  const alice=cards.nth(0),photo=alice.locator('.participant-card__photo'),name=alice.getByRole('heading',{name:'Alice'});
+  await expect(alice.getByRole('heading',{name:'Alice'})).toHaveCSS('opacity','1');
+  await expect(photo).toHaveCSS('opacity','0');
+  // Illustration cards keep their circle.
+  await expect(cards.nth(1).locator('.participant-card__avatar')).toHaveCount(1);await expect(cards.nth(1).locator('.participant-card__photo')).toHaveCount(0);
+  const reveal=async()=>{
+    await expect(photo).toHaveCSS('opacity','1');await expect(name).toHaveCSS('opacity','0');
+    const box=(await photo.boundingBox())!,card=(await alice.boundingBox())!;
+    expect(Math.abs(box.width-card.width)).toBeLessThanOrEqual(2);expect(Math.abs(box.height-card.height)).toBeLessThanOrEqual(2);
+    expect(await photo.locator('img').evaluate((element)=>getComputedStyle(element).objectFit)).toBe('cover');
+    await expect(alice.getByText('0 de 3 ideas')).toHaveCSS('color','rgb(255, 250, 242)');
+  };
+  if(!hasTouch){
+    await alice.hover();await reveal();
+    await mkdir('artifacts/ui',{recursive:true});await page.screenshot({path:`artifacts/ui/catalogue-photo-${info.project.name}.png`});
+    await page.mouse.move(0,0);await expect(photo).toHaveCSS('opacity','0');await expect(name).toHaveCSS('opacity','1');
+    await alice.focus();await reveal();
+  }else{
+    await expect(alice).not.toHaveAttribute('data-revealed');
+    await alice.evaluate((element)=>element.scrollIntoView({block:'center'}));
+    await expect(alice).toHaveAttribute('data-revealed','true');await reveal();
+    await mkdir('artifacts/ui',{recursive:true});await page.screenshot({path:`artifacts/ui/catalogue-photo-${info.project.name}.png`});
+    await cards.nth(3).evaluate((element)=>element.scrollIntoView({block:'center'}));
+    await expect(alice).not.toHaveAttribute('data-revealed');await expect(name).toHaveCSS('opacity','1');
+    await alice.evaluate((element)=>element.scrollIntoView({block:'center'}));await expect(alice).toHaveAttribute('data-revealed','true');
+    await alice.tap();await expect(page).toHaveURL(/\/participante\/alice$/);
+  }
 });
