@@ -38,17 +38,17 @@ export function useProfileEditor(initial:EditableProfile) {
         'No pudimos confirmar la subida. La foto anterior se conserva; puedes intentarlo de nuevo.');return null;
     }finally{if(mounted.current)setUploading(false);locked.current=false;controller.current=null;}
   }
-  async function save() {
-    if(locked.current||needsReview||retryAt>Date.now())return;
+  async function save():Promise<boolean> {
+    if(locked.current||needsReview||retryAt>Date.now())return false;
     const request=profileRequest(base,draft),errors=profileErrors(request);setFields(errors);setNotice('');
-    if(Object.keys(errors).length){requestAnimationFrame(()=>focusField(`profile-${Object.keys(errors)[0]}`));return;}
+    if(Object.keys(errors).length){requestAnimationFrame(()=>focusField(`profile-${Object.keys(errors)[0]}`));return false;}
     locked.current=true;setSaving(true);setIssue(null);setLatest(undefined);setReviewError(false);const abort=new AbortController();controller.current=abort;
     try {
-      const saved=await updateProfile(request,abort.signal);if(!mounted.current)return;
-      const next=profileDraft(saved);setBase(saved);setDraft(next);setBaseline(JSON.stringify(next));setNotice('Tu perfil quedó guardado. Tus regalos se mantienen.');
-    }catch(error){if(!mounted.current)return;const failure=error instanceof ProfileMutationError?error:new ProfileMutationError('uncertain');
+      const saved=await updateProfile(request,abort.signal);if(!mounted.current)return false;
+      const next=profileDraft(saved);setBase(saved);setDraft(next);setBaseline(JSON.stringify(next));setNotice('Tu perfil quedó guardado. Tus regalos se mantienen.');return true;
+    }catch(error){if(!mounted.current)return false;const failure=error instanceof ProfileMutationError?error:new ProfileMutationError('uncertain');
       setIssue(failure);setFields(failure.fields);if(failure.kind==='rate')setRetryAt(Date.now()+Math.max(1,failure.retryAfter)*1000);
-      requestAnimationFrame(()=>focusField(Object.keys(failure.fields).length?`profile-${Object.keys(failure.fields)[0]}`:'profile-feedback'));
+      requestAnimationFrame(()=>focusField(Object.keys(failure.fields).length?`profile-${Object.keys(failure.fields)[0]}`:'profile-feedback'));return false;
     }finally{if(mounted.current)setSaving(false);locked.current=false;controller.current=null;}
   }
   async function review() {

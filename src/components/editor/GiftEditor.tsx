@@ -8,6 +8,7 @@ import { useGiftEditor } from '../../hooks/useGiftEditor';
 import { usePrivateAccess } from '../../app/PrivateAccessProvider';
 import { Button } from '../ui/Button';
 import { ErrorSummary, Notice, SaveFeedback } from '../ui/Feedback';
+import { useProgress } from '../ui/ProgressOverlay';
 import { TextAreaField, TextField, SelectField } from '../ui/Fields';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 import { GiftDetailFields } from './GiftDetailFields';
@@ -17,7 +18,7 @@ import { GiftProductImport } from './GiftProductImport';
 
 export function GiftEditor({ participantId, name, slug, position, initial, canWrite }: { participantId: string; name: string; slug: string; position: number; initial: Gift | null; canWrite: boolean }) {
   const editor = useGiftEditor(participantId, slug, position, initial);
-  const { state: access, verify, close } = usePrivateAccess();
+  const { state: access, verify, close } = usePrivateAccess(), track = useProgress();
   const [confirm, setConfirm] = useState<'delete' | 'load' | 'close' | null>(null);
   const [accessWaiting, setAccessWaiting] = useState(false);
   const accessRetryAt = access.status === 'temporary' ? access.retryAt : 0;
@@ -29,9 +30,9 @@ export function GiftEditor({ participantId, name, slug, position, initial, canWr
   useEffect(() => { if (blocker.state === 'blocked' && !editor.dirty && !editor.busy) blocker.proceed(); }, [blocker, editor.dirty, editor.busy]);
   const disabled = editor.busy || !canWrite;
   const errors = Object.entries(editor.fields).filter(([,message]) => !!message).map(([key,message]) => ({ id: document.getElementById(`gift-${key}`) ? `gift-${key}` : 'editor-feedback', message }));
-  async function submit(event: FormEvent) { event.preventDefault(); if (canWrite) await editor.save(); }
+  async function submit(event: FormEvent) { event.preventDefault(); if (canWrite) await track(editor.save(), { busy: 'Guardando tu regalo…', done: 'Regalo guardado' }); }
   async function confirmAction() {
-    if (confirm === 'delete') { await editor.remove(); setConfirm(null); requestAnimationFrame(() => document.getElementById('gift-title')?.focus()); }
+    if (confirm === 'delete') { await track(editor.remove(), { busy: 'Limpiando la opción…', done: 'Opción limpia' }); setConfirm(null); requestAnimationFrame(() => document.getElementById('gift-title')?.focus()); }
     else if (confirm === 'load') { editor.useLatest(false); setConfirm(null); }
     else if (confirm === 'close') { close(); setConfirm(null); }
   }

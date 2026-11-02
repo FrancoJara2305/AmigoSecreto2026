@@ -8,7 +8,7 @@ Abre tu enlace privado local original y pulsa **Editar mi perfil**. El organizad
 
 El formulario permite:
 
-- Subir una foto JPEG, PNG o WebP estática, de hasta 3 MiB y 16 megapíxeles. El servidor valida y normaliza a WebP de máximo 512 px para avatar. La vista previa local no guarda el perfil.
+- Subir una foto JPEG, PNG o WebP estática, de hasta 3 MiB y 16 megapíxeles. Antes de subirla se puede encuadrar y acercar en el círculo ([detalle](photo-editing-polish.md)). El servidor valida y normaliza a WebP de máximo 512 px para avatar. La vista previa local no guarda el perfil.
 - Usar una URL HTTPS de foto, revisarla con **Ver foto**, conservar la foto guardada o elegir una de las seis ilustraciones existentes. La foto es opcional. Una URL rota muestra la ilustración de respaldo.
 - Escribir un mensaje personal de hasta 500 caracteres y gustos/consideraciones generales de hasta 2000. Ambos son opcionales; vaciarlos los elimina al guardar. El texto es plano y será público. Las pistas específicas de un regalo siguen en su propia opción.
 

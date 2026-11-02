@@ -10,10 +10,11 @@ import { Notice,ErrorSummary,SaveFeedback } from '../ui/Feedback';
 import { TextAreaField } from '../ui/Fields';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 import { ParticipantAvatar } from '../participants/ParticipantAvatar';
+import { useProgress } from '../ui/ProgressOverlay';
 import { ProfilePhotoField } from './ProfilePhotoField';
 
 export function ProfileEditor({initial,canWrite}:{initial:EditableProfile;canWrite:boolean}) {
-  const editor=useProfileEditor(initial),{state:access,verify,close}=usePrivateAccess();
+  const editor=useProfileEditor(initial),{state:access,verify,close}=usePrivateAccess(),track=useProgress();
   const [confirm,setConfirm]=useState<'close'|'load'|null>(null),[accessWaiting,setAccessWaiting]=useState(false);
   const retryAt=access.status==='temporary'?access.retryAt:0;
   useEffect(()=>{setAccessWaiting(retryAt>Date.now());const timer=setTimeout(()=>setAccessWaiting(false),Math.max(0,retryAt-Date.now()));return()=>clearTimeout(timer);},[retryAt]);
@@ -22,7 +23,7 @@ export function ProfileEditor({initial,canWrite}:{initial:EditableProfile;canWri
   const blocker=useBlocker(({currentLocation,nextLocation})=>(editor.dirty||editor.busy)&&currentLocation.pathname+currentLocation.search!==nextLocation.pathname+nextLocation.search);
   useBeforeUnload(useCallback((event)=>{if(editor.dirty||editor.busy){event.preventDefault();event.returnValue='';}},[editor.dirty,editor.busy]));
   useEffect(()=>{if(blocker.state==='blocked'&&!editor.dirty&&!editor.busy)blocker.proceed();},[blocker,editor.dirty,editor.busy]);
-  async function submit(event:FormEvent){event.preventDefault();if(canWrite)await editor.save();}
+  async function submit(event:FormEvent){event.preventDefault();if(canWrite)await track(editor.save(),{busy:'Guardando tu perfil…',done:'Perfil guardado'});}
   const issue=editor.issue?.kind==='conflict'?'El perfil cambió desde que lo abriste. Conservamos tu borrador; revisa lo guardado antes de decidir.':editor.issue?.kind==='uncertain'?'No pudimos confirmar el resultado. El perfil podría haberse guardado. Consulta lo guardado antes de volver a enviar.':
     editor.issue?.kind==='access'?'El acceso ya no permite guardar. Tu borrador permanece en esta pestaña.':editor.issue?.kind==='rate'?`Has realizado varias solicitudes. Espera ${Math.max(1,Math.ceil(editor.issue.retryAfter/60))} minuto(s) antes de volver a guardar.`:'Revisa los campos indicados antes de volver a guardar.';
   const errors=Object.entries(editor.fields).filter(([,message])=>!!message).map(([key,message])=>({id:document.getElementById(`profile-${key}`)?`profile-${key}`:'profile-feedback',message}));

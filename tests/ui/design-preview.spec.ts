@@ -86,7 +86,7 @@ test('confirm clears only the local example and notifications can be dismissed',
   const trigger = page.getByRole('button', { name: 'Ver notificación', exact: true });
   await trigger.click();
   await expect(trigger).toBeFocused();
-  await expect(page.getByRole('status')).toContainText('Un pequeño paso, mucha ilusión');
+  await expect(page.getByRole('status').filter({ hasText: 'Un pequeño paso, mucha ilusión' })).toBeAttached();
   await page.getByRole('button', { name: 'Cerrar notificación: Un pequeño paso, mucha ilusión', exact: true }).click();
   await expect(trigger).toBeFocused();
   await expect(page.getByRole('list', { name: 'Notificaciones' }).getByRole('listitem')).toHaveCount(0);

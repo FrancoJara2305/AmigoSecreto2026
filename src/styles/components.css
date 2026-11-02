@@ -1,4 +1,4 @@
-.button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: .6rem; padding: .7rem 1.2rem; border: 1px solid transparent; border-radius: var(--radius-control); font-size: .875rem; font-weight: 600; line-height: 1.4; text-decoration: none; transition: background-color var(--duration), transform var(--duration), box-shadow var(--duration); }
+.button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: .6rem; padding: .7rem 1.2rem; border: 1px solid transparent; border-radius: var(--radius-control); font-size: .875rem; font-weight: 600; line-height: 1.4; text-decoration: none; transition: background-color var(--duration) var(--ease-soft), border-color var(--duration) var(--ease-soft), color var(--duration) var(--ease-soft), transform var(--duration) var(--ease-soft), box-shadow var(--duration) var(--ease-soft); }
 .button svg { width: 18px; height: 18px; }
 .button--primary { background: var(--color-forest); color: var(--color-ivory); }
 .button--secondary { border-color: var(--border); background: transparent; color: var(--ink); }
@@ -7,11 +7,65 @@
 .button--icon { width: 44px; min-height: 44px; padding: .6rem; }
 .button:disabled { background: #e1e5d9; color: var(--muted); border-color: #e1e5d9; box-shadow: none; }
 .button[aria-busy="true"] { cursor: progress; }
+/* Hover lifts and tints every variant; keyboard focus gets the same tint as well as the outline. */
 @media (hover: hover) {
-  .button--primary:not(:disabled):hover { background: #245542; transform: translateY(-1px); }
-  .button--secondary:not(:disabled):hover, .button--quiet:not(:disabled):hover { background: #173e320b; }
-  .button--danger:not(:disabled):hover { background: #882432; }
+  .button--primary:not(:disabled):hover { background: #245542; transform: translateY(-1px); box-shadow: 0 6px 18px #173e3229; }
+  .button--secondary:not(:disabled):hover { border-color: var(--color-forest); background: #173e3210; transform: translateY(-1px); box-shadow: 0 4px 14px #173e3214; }
+  .button--quiet:not(:disabled):hover { background: #173e3214; }
+  .button--danger:not(:disabled):hover { background: #882432; transform: translateY(-1px); box-shadow: 0 6px 18px #a82e3c33; }
 }
+.button--secondary:not(:disabled):focus-visible, .button--quiet:not(:disabled):focus-visible { background: #173e3210; }
+.button:not(:disabled):active { transform: translateY(0) scale(.97); box-shadow: none; transition-duration: 80ms; }
+
+/* File picker: the transparent input covers the whole area, so click, keyboard and drop all reach it. */
+.file-drop { position: relative; display: flex; align-items: center; gap: 1rem; min-height: 84px; padding: 1rem 1.1rem; border: 1.5px dashed var(--border); border-radius: var(--radius-card); background: var(--surface-raised); transition: border-color var(--duration) var(--ease-soft), background-color var(--duration) var(--ease-soft), box-shadow var(--duration) var(--ease-soft); }
+.file-drop__input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+.file-drop__input:disabled { cursor: not-allowed; }
+.file-drop__icon { display: grid; flex-shrink: 0; width: 48px; height: 48px; place-items: center; border-radius: 50%; background: var(--color-forest); color: var(--color-ivory); transition: transform var(--duration-smooth) var(--ease-soft), background-color var(--duration) var(--ease-soft); }
+.file-drop__icon svg { width: 22px; height: 22px; }
+.file-drop__text { display: grid; gap: .1rem; min-width: 0; font-size: .875rem; line-height: 1.45; overflow-wrap: anywhere; }
+.file-drop__text span { color: var(--muted); font-size: .8rem; }
+.file-drop:hover:not(:has(:disabled)), .file-drop--over { border-color: var(--color-forest); border-style: solid; background: #edf2e6; box-shadow: 0 6px 20px #173e3212; }
+.file-drop:hover:not(:has(:disabled)) .file-drop__icon, .file-drop--over .file-drop__icon { transform: translateY(-2px) scale(1.05); background: #245542; }
+.file-drop:has(.file-drop__input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; border-color: var(--color-forest); background: #edf2e6; }
+.file-drop:has(.file-drop__input[aria-invalid="true"]) { border-color: var(--error); }
+.file-drop:has(:disabled) { border-color: #c9cfbf; background: #f0f1e9; color: var(--muted); }
+.file-drop:has(:disabled) .file-drop__icon { background: #c9cfbf; color: var(--muted); }
+.file-drop--busy .file-drop__icon, .file-drop--busy:has(:disabled) .file-drop__icon { background: var(--color-gold); color: var(--ink); }
+
+/* Upload and save veil. It is decorative and click-through; the live region announces the state. */
+.progress-overlay { position: fixed; z-index: 85; inset: 0; display: grid; place-items: center; padding: 1rem; background: #fffaf29e; backdrop-filter: blur(2px); pointer-events: none; animation: progress-in var(--duration-smooth) var(--ease-soft); }
+.progress-overlay--leaving { animation: progress-out 260ms var(--ease-soft) forwards; }
+.progress-overlay__card { display: grid; justify-items: center; gap: .9rem; width: min(280px, 100%); padding: 1.75rem 1.5rem; border: 1px solid var(--border-soft); border-radius: var(--radius-card); background: var(--surface-raised); box-shadow: 0 24px 70px #173e3226; text-align: center; animation: progress-pop var(--duration-reveal) var(--ease-soft); }
+.progress-overlay__ring { width: 56px; height: 56px; margin: 4px; border: 4px solid var(--color-cream); border-top-color: var(--color-forest); border-radius: 50%; animation: spin .85s linear infinite; }
+.progress-overlay__check { width: 64px; height: 64px; animation: progress-pop var(--duration-reveal) var(--ease-soft); }
+.progress-overlay__check circle { fill: var(--color-forest); }
+.progress-overlay__check path { fill: none; stroke: var(--color-ivory); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; animation: progress-draw 420ms 120ms var(--ease-soft) backwards; }
+.progress-overlay__label { font-weight: 600; font-size: .95rem; overflow-wrap: anywhere; }
+@keyframes progress-in { from { opacity: 0; } }
+@keyframes progress-out { to { opacity: 0; } }
+@keyframes progress-pop { from { opacity: 0; transform: scale(.92); } }
+@keyframes progress-draw { from { stroke-dashoffset: 40; } }
+
+/* Photo framing dialog */
+.crop-dialog { width: min(440px, calc(100% - 24px)); max-height: calc(100dvh - 24px); margin: auto; overflow-y: auto; padding: 0; border: 1px solid var(--border-soft); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #173e3238; }
+.crop-dialog::backdrop { background: #112b246b; }
+.crop-dialog__content { display: grid; gap: 1rem; padding: clamp(16px, 4vw, 26px); }
+.crop-dialog__top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.crop-dialog h2 { font-family: var(--font-display); font-size: 1.7rem; font-weight: 500; line-height: 1.2; }
+.crop-dialog__help { color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.crop-stage { position: relative; width: min(100%, 320px); aspect-ratio: 1; justify-self: center; overflow: hidden; border-radius: var(--radius-control); background: #1d2b26; cursor: grab; touch-action: none; user-select: none; }
+.crop-stage:active { cursor: grabbing; }
+.crop-stage:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.crop-stage--loading { cursor: progress; }
+.crop-stage img { position: absolute; max-width: none; pointer-events: none; }
+.crop-stage--loading img { opacity: 0; }
+.crop-stage__mask { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px #112b24a8; outline: 2px solid #fffaf2d9; outline-offset: -1px; pointer-events: none; }
+.crop-zoom { display: flex; align-items: center; gap: .5rem; }
+.crop-zoom .button:disabled { background: transparent; border-color: transparent; opacity: .45; }
+.crop-zoom input { flex: 1; min-width: 0; height: 44px; accent-color: var(--color-forest); cursor: pointer; }
+.crop-dialog__actions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: end; }
+.crop-dialog__actions > .button:first-child:not(:last-child):not(.button--secondary) { margin-right: auto; }
 .spinner { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -85,5 +139,8 @@ textarea.field__control { min-height: 108px; resize: vertical; }
 @media (max-width: 479px) {
   .confirm-dialog__actions { flex-direction: column-reverse; }
   .confirm-dialog__actions .button { width: 100%; }
+  .crop-dialog__actions { flex-direction: column-reverse; }
+  .crop-dialog__actions .button { width: 100%; }
+  .crop-dialog__actions > .button:first-child:not(:last-child):not(.button--secondary) { margin-right: 0; }
   .toast-stack { bottom: 1rem; right: 1rem; }
 }

@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { TextField,TextAreaField } from '../ui/Fields';
 import { LoadingState,Notice,ErrorSummary,SaveFeedback } from '../ui/Feedback';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
+import { useProgress } from '../ui/ProgressOverlay';
 import { ProfilePhotoField } from '../editor/ProfilePhotoField';
 
 type Model={person:AdminPerson}|{event:AdminEvent};
@@ -33,7 +34,7 @@ export function OrganizerForm({mode,id,canWrite}:{mode:'new'|'edit'|'event';id:s
 function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|'edit'|'event';canWrite:boolean}){
   const [creationId]=useState(()=>crypto.randomUUID()),[base,setBase]=useState(initial),[draft,setDraft]=useState(()=>({...toDraft(initial??{person:{id:creationId,name:'',slug:'',version:1,display_order:0,photo_path:null,photo_url:null,avatar_key:'gift',personal_message:null,general_preferences:null}}),...(mode==='new'?{display_order:''}:{})}));
   const [baseline,setBaseline]=useState(()=>JSON.stringify(draft)),[autoSlug,setAutoSlug]=useState(mode==='new'),[fields,setFields]=useState<Record<string,string>>({}),[notice,setNotice]=useState(''),[needsReview,setNeedsReview]=useState(false),[latest,setLatest]=useState<Model|null|undefined>(),[slugConfirm,setSlugConfirm]=useState(false),[loadConfirm,setLoadConfirm]=useState(false),[created,setCreated]=useState('');
-  const op=useAdminOperation(),reviewOp=useAdminOperation(),{upload,state:accessState}=usePrivateAccess(),navigate=useNavigate(),location=useLocation();
+  const op=useAdminOperation(),reviewOp=useAdminOperation(),track=useProgress(),{upload,state:accessState}=usePrivateAccess(),navigate=useNavigate(),location=useLocation();
   const [uploading,setUploading]=useState(false),[uploadIssue,setUploadIssue]=useState(''),[uploadAt,setUploadAt]=useState(0),[,tick]=useState(0),[reviewing,setReviewing]=useState(false),[reviewError,setReviewError]=useState(false);
   const controller=useRef<AbortController|null>(null),reviewController=useRef<AbortController|null>(null),locked=useRef(false),mounted=useRef(true);
   const person=base&&'person' in base?base.person:null,event=base&&'event' in base?base.event:null,creating=mode==='new'&&!person;
@@ -50,17 +51,18 @@ function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|
     const participant={...profile,name:draft.name,...(!creating||!autoSlug?{slug:draft.slug}:{}),...(draft.display_order!==''?{display_order:Number(draft.display_order)}:{})};
     return {action:creating?'create_participant':'update_participant',participant_id:previewPerson.id,...(!creating?{expected_version:person!.version}:{}),participant};
   }
-  async function save(confirmed=false){
-    if(!canWrite||busy||locked.current||needsReview||op.waiting)return;const body=request(),validation=validateAdmin(body);
+  async function save(confirmed=false):Promise<boolean>{
+    if(!canWrite||busy||locked.current||needsReview||op.waiting)return false;const body=request(),validation=validateAdmin(body);
     const errors=validation.ok?{}:validation.fields;
     if(mode!=='event'&&draft.display_order!==''&&!/^\d+$/.test(draft.display_order))errors['participant.display_order']='Usa un número entero no negativo.';
-    setFields(errors);setNotice('');if(Object.keys(errors).length){requestAnimationFrame(()=>document.getElementById(fieldTarget(Object.keys(errors)[0]))?.focus());return;}
-    if(person&&draft.slug!==person.slug&&!confirmed){setSlugConfirm(true);return;}
-    locked.current=true;try{const result=await op.run(body);if(!mounted.current)return;
-      const saved:Model=result.participant?{person:result.participant}:{event:result.event!};const next=toDraft(saved);setBase(saved);setDraft(next);setBaseline(JSON.stringify(next));setFields({});setNotice(mode==='event'?'Los datos del evento quedaron guardados.':'Los datos del participante quedaron guardados.');if(mode==='new')setCreated(result.participant!.id);
-    }catch(error){if(mounted.current&&error instanceof AdminError){setFields(error.fields);if(error.kind==='conflict'||error.kind==='uncertain')setNeedsReview(true);}}
+    setFields(errors);setNotice('');if(Object.keys(errors).length){requestAnimationFrame(()=>document.getElementById(fieldTarget(Object.keys(errors)[0]))?.focus());return false;}
+    if(person&&draft.slug!==person.slug&&!confirmed){setSlugConfirm(true);return false;}
+    locked.current=true;try{const result=await op.run(body);if(!mounted.current)return false;
+      const saved:Model=result.participant?{person:result.participant}:{event:result.event!};const next=toDraft(saved);setBase(saved);setDraft(next);setBaseline(JSON.stringify(next));setFields({});setNotice(mode==='event'?'Los datos del evento quedaron guardados.':'Los datos del participante quedaron guardados.');if(mode==='new')setCreated(result.participant!.id);return true;
+    }catch(error){if(mounted.current&&error instanceof AdminError){setFields(error.fields);if(error.kind==='conflict'||error.kind==='uncertain')setNeedsReview(true);}return false;}
     finally{locked.current=false;setSlugConfirm(false);}
   }
+  const saving=mode==='event'?{busy:'Guardando el evento…',done:'Evento guardado'}:creating?{busy:'Creando participante…',done:'Participante creado'}:{busy:'Guardando participante…',done:'Participante guardado'};
   async function review(){
     if(busy||locked.current||!canWrite)return;setLatest(undefined);setReviewError(false);setReviewing(true);try{if(mode==='event'){const result=await reviewOp.run({action:'admin_list'});setLatest({event:result.snapshot!.event});}
       else{const abort=new AbortController();reviewController.current=abort;const person=await loadAdminPerson(previewPerson.id,abort.signal);if(mounted.current&&!abort.signal.aborted)setLatest(person?{person}:null);}}
@@ -94,7 +96,7 @@ function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|
         <div className="admin-actions"><Button variant="secondary" onClick={()=>useLatest(true)}>Seguir con mi borrador</Button><Button variant="quiet" onClick={()=>dirty?setLoadConfirm(true):useLatest(false)}>Cargar datos guardados</Button></div></>}
       {latest===null&&creating&&<Button onClick={()=>useLatest(true)}>Volver a preparar el alta</Button>}
     </section>}
-    <form className="admin-form" noValidate onSubmit={(e:FormEvent)=>{e.preventDefault();void save();}}><ErrorSummary errors={Object.entries(fields).map(([key,message])=>({id:fieldTarget(key),message}))}/><fieldset disabled={!canWrite||busy}><legend className="sr-only">{title}</legend>
+    <form className="admin-form" noValidate onSubmit={(e:FormEvent)=>{e.preventDefault();void track(save(),saving);}}><ErrorSummary errors={Object.entries(fields).map(([key,message])=>({id:fieldTarget(key),message}))}/><fieldset disabled={!canWrite||busy}><legend className="sr-only">{title}</legend>
     {mode==='event'?<><TextField id="admin-title" label="Título del evento" required maxLength={100} value={draft.title} error={fields['event.title']} onChange={(e)=>change('title',e.target.value)}/><TextAreaField id="admin-welcome_message" label="Mensaje de bienvenida" required maxLength={500} value={draft.welcome_message} error={fields['event.welcome_message']} onChange={(e)=>change('welcome_message',e.target.value)}/><TextField id="admin-exchange_date" label="Fecha del intercambio" type="date" value={draft.exchange_date} error={fields['event.exchange_date']} hint="Opcional. Fecha de calendario en Lima; déjala vacía si todavía no la conocen." onChange={(e)=>change('exchange_date',e.target.value)}/></>:<>
       <TextField id="admin-name" label="Nombre" required maxLength={80} value={draft.name} error={fields['participant.name']} onChange={(e)=>change('name',e.target.value)}/>
       <TextField id="admin-slug" label="Slug del enlace público" maxLength={100} value={draft.slug} error={fields['participant.slug']} hint={creating&&autoSlug?'Propuesto desde el nombre. El servidor ajustará colisiones al crear.':'Cambiar el nombre conserva este enlace. Cambiar el slug modifica la URL pública.'} onChange={(e)=>change('slug',e.target.value)}/><p className="admin-public-url">Enlace público resultante: <span>{globalThis.location.origin}/participante/{draft.slug||'participante'}</span></p>
@@ -103,7 +105,7 @@ function OrganizerEditor({initial,mode,canWrite}:{initial:Model|null;mode:'new'|
       <TextAreaField id="admin-personal_message" label="Mensaje personal" maxLength={500} value={draft.photo.personal_message} error={fields['participant.personal_message']} onChange={(e)=>photoChange('personal_message',e.target.value)}/><TextAreaField id="admin-general_preferences" label="Gustos y consideraciones generales" maxLength={2000} value={draft.photo.general_preferences} error={fields['participant.general_preferences']} onChange={(e)=>photoChange('general_preferences',e.target.value)}/>
     </>}
     </fieldset><div className="admin-actions"><Button type="submit" loading={busy} disabled={!canWrite||needsReview||op.waiting}>{busy?'Preparando…':mode==='event'?'Guardar evento':creating?'Crear participante':'Guardar participante'}</Button><Link className="button button--quiet" to="/organizador">Cancelar</Link>{person&&<Link className="text-link" to={`/participante/${person.slug}`}>Ver y editar lista</Link>}</div></form>
-    <ConfirmationDialog open={slugConfirm} onOpenChange={(open)=>setSlugConfirm(open)} title="¿Cambiar el enlace público?" description={`El enlace /participante/${person?.slug} dejará de funcionar. El nuevo será /participante/${draft.slug}. El enlace privado seguirá asociado a la misma persona.`} confirmLabel="Sí, cambiar el enlace público" busy={op.busy} onConfirm={()=>{void save(true);}}/>
+    <ConfirmationDialog open={slugConfirm} onOpenChange={(open)=>setSlugConfirm(open)} title="¿Cambiar el enlace público?" description={`El enlace /participante/${person?.slug} dejará de funcionar. El nuevo será /participante/${draft.slug}. El enlace privado seguirá asociado a la misma persona.`} confirmLabel="Sí, cambiar el enlace público" busy={op.busy} onConfirm={()=>{void track(save(true),saving);}}/>
     <ConfirmationDialog open={loadConfirm} onOpenChange={(open)=>setLoadConfirm(open)} title="¿Descartar el borrador?" description="Cargar los datos guardados reemplazará los cambios que aún no enviaste." confirmLabel="Sí, cargar datos guardados" onConfirm={()=>{useLatest(false);setLoadConfirm(false);}}/>
   </>;
 }

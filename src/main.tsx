@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ToastProvider } from './components/ui/ToastNotifications';
+import { ProgressProvider } from './components/ui/ProgressOverlay';
 import { App } from './app/App';
 import { initializePrivateAccess } from './app/private-access-bootstrap';
 import { PrivateAccessProvider } from './app/PrivateAccessProvider';
@@ -16,6 +17,6 @@ import './styles/gift-editor.css';
 initializePrivateAccess();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PrivateAccessProvider><ToastProvider><App /></ToastProvider></PrivateAccessProvider>
+    <PrivateAccessProvider><ToastProvider><ProgressProvider><App /></ProgressProvider></ToastProvider></PrivateAccessProvider>
   </StrictMode>,
 );
