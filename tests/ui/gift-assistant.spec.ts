@@ -87,33 +87,30 @@ test('explicit gift choice builds a public-only prompt that is copied without an
   expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
 });
 
-test('general preferences need a written question and clipboard denial selects the text for manual copy',async({page})=>{
+test('clipboard denial selects the generated prompt for manual copy',async({page})=>{
   await profiles(page);await clipboard(page,false);
   await page.goto('/participante/melyza');
-  await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
-  await panel(page).getByLabel('Gustos generales de esta persona').check();
-  await expect(panel(page).getByText('Melyza · Gustos generales',{exact:true})).toBeVisible();
-  await expect(panel(page).getByText('Escribe tu consulta para preparar el texto.')).toBeVisible();
+  await launcher(page).click();await page.getByRole('button',{name:'Mostrar opciones similares para este regalo'}).click();
+  await expect(panel(page).getByText('Elige sobre qué regalo quieres consultar para preparar el texto.')).toBeVisible();
   await expect(generate(page)).toBeDisabled();
-  await panel(page).getByLabel('Tu consulta').fill('¿Qué regalo pequeño le gustaría?');
+  await panel(page).getByLabel('Opción 1 · Un libro de relatos').check();
   await generate(page).click();
-  await expect(output(page)).toHaveValue(/Gustos publicados: Me gustan los tonos suaves\.\nDATOS>>>$/);
+  await expect(output(page)).toHaveValue(/Producto: Un libro de relatos\n/);
   await promptWindow(page).getByRole('button',{name:'Copiar texto'}).click();
   await expect(promptWindow(page).getByText('Puedes copiarlo desde aquí')).toBeVisible();
   await expect(output(page)).toBeFocused();
   expect(await page.evaluate(()=>{const field=document.activeElement as HTMLTextAreaElement;return field.selectionEnd-field.selectionStart===field.value.length;})).toBe(true);
 });
 
-test('without saved gifts only the general question is offered; Escape closes and returns focus',async({page})=>{
+test('without saved gifts the prompt actions point to the chat; Escape closes and returns focus',async({page})=>{
   await profiles(page);
   await page.goto('/participante/derek-leonardo');
   await launcher(page).click();await page.getByRole('button',{name:'Mostrar tiendas físicas con este producto'}).click();
   await expect(panel(page).getByText('Todavía no hay ideas guardadas')).toBeVisible();
   await panel(page).getByRole('button',{name:'Hacer otra consulta'}).click();
-  await expect(panel(page).getByRole('radio')).toHaveCount(1);
-  await expect(panel(page).getByLabel('Gustos generales de esta persona')).toBeFocused();
+  await expect(chat(page).getByRole('log')).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(panel(page)).toHaveCount(0);
+  await expect(chat(page)).toHaveCount(0);
   await expect(launcher(page)).toBeFocused();
   // The helper is part of profiles only.
   await page.goto('/');await expect(launcher(page)).toHaveCount(0);
@@ -194,13 +191,17 @@ test('"Otra consulta" opens a chat with only the greeting and a message box, kee
   expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
 });
 
-test('a switched-off assistant keeps the copy-text form, and chat failures return the message to the box',async({page})=>{
+test('a switched-off assistant still opens the chat and points to the prompt actions; chat failures return the message to the box',async({page})=>{
   await profiles(page);await clipboard(page);
   await assistantApi(page,{available:false});
   await page.goto('/participante/melyza');
   await launcher(page).click();await page.getByRole('button',{name:'Otra consulta…'}).click();
-  await expect(panel(page).getByLabel('Gustos generales de esta persona')).toBeVisible();
-  await expect(page.getByRole('log')).toHaveCount(0);
+  await expect(log(page).locator('p').first()).toHaveText('Que fue');
+  await expect(log(page)).toContainText('elige «Opciones similares» o «Tiendas físicas»');
+  await expect(chat(page).getByLabel('Tu mensaje')).toBeDisabled();
+  await expect(chat(page).getByRole('radio')).toHaveCount(0);
+  await expect(chat(page).getByRole('button',{name:'Copiar texto'})).toHaveCount(0);
+  expect((await axe(page)).violations).toEqual([]);
 
   const cases:[{status:number;json:unknown;headers?:Record<string,string>},RegExp][]=[
     [{status:429,json:{error:{code:'RATE_LIMITED'}},headers:{'Retry-After':'3600'}},/límite de mensajes por hoy/],

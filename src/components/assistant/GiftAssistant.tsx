@@ -22,7 +22,8 @@ let availability: Promise<boolean> | null = null;
 const checkAvailability = () => availability ??= loadAssistantAvailability(new AbortController().signal).catch(() => false);
 
 // Prepares a request for the person's own AI assistant to copy. When the gift assistant is available,
-// "Otra consulta" is instead a chat answered by the gift-assistant Edge Function.
+// "Otra consulta" is always a chat answered by the gift-assistant Edge Function; when that is
+// switched off, the chat says so and points to the two prompt actions.
 export function GiftAssistant({ participant, gifts }: { participant: { id: string; name: string; general_preferences: string | null }; gifts: Gift[] }) {
   const notify = useToast();
   const [view, setView] = useState<'closed' | 'menu' | 'panel'>('closed');
@@ -46,7 +47,7 @@ export function GiftAssistant({ participant, gifts }: { participant: { id: strin
   const gift = targetId && targetId !== GENERAL ? gifts.find((item) => item.id === targetId) ?? null : null;
   const general = targetId === GENERAL;
   const contextLabel = gift ? `${participant.name} · Opción ${gift.position} · ${gift.title}` : general ? `${participant.name} · Gustos generales` : participant.name;
-  const chat = intent === 'other' && chatAvailable === true;
+  const chat = intent === 'other' && chatAvailable !== null;
   const checking = intent === 'other' && chatAvailable === null;
   const needsGift = intent !== 'other' && gifts.length === 0;
   const ready = (gift || general) && (intent !== 'other' || message.trim());
@@ -79,8 +80,6 @@ export function GiftAssistant({ participant, gifts }: { participant: { id: strin
     void checkAvailability().then((available) => {
       if (!active) return;
       setChatAvailable(available);
-      // While checking there was nothing to focus; the copy form takes focus once it appears (the chat focuses itself).
-      if (!available) requestAnimationFrame(() => { if (!panel.current?.contains(document.activeElement)) focusPanel(); });
     });
     return () => { active = false; };
   }, [view, intent]);
@@ -138,10 +137,10 @@ export function GiftAssistant({ participant, gifts }: { participant: { id: strin
         </div>
       </header>
       <div className={`assistant-panel__body${chat ? ' assistant-panel__body--chat' : ''}`} inert={showPrompt || undefined}>
-        {chat ? <AssistantChat participantId={participant.id} />
+        {chat ? <AssistantChat participantId={participant.id} available={chatAvailable === true} />
         : checking ? <p className="assistant-note assistant-checking" role="status"><LoaderCircle aria-hidden="true" className="spinner" />Abriendo el chat…</p>
         : needsGift ? <div className="assistant-empty">
-          <Notice title="Todavía no hay ideas guardadas">Para buscar opciones o tiendas hace falta un regalo guardado en esta lista. Puedes preguntar por sus gustos generales.</Notice>
+          <Notice title="Todavía no hay ideas guardadas">Para buscar opciones o tiendas hace falta un regalo guardado en esta lista. Puedes consultar sus gustos en el chat de «Otra consulta».</Notice>
           <Button variant="secondary" icon={<MessageCircle />} data-autofocus onClick={() => open('other')}>Hacer otra consulta</Button>
         </div> : <div className="assistant-compose">
           <fieldset className="assistant-choice"><legend>¿Sobre qué regalo(s) quieres consultar?</legend>

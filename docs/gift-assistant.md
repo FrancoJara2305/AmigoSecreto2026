@@ -20,7 +20,7 @@ En el perfil público aparece una burbuja «Ayuda para encontrar este regalo» c
 
 ### Chat de «Otra consulta»
 
-- Al abrir «Otra consulta», la app pregunta una vez por carga de página si el asistente está disponible (`GET`, sin cuota). Si la función no existe, está apagada o falla, «Otra consulta» conserva el formulario para copiar el texto descrito arriba.
+- Al abrir «Otra consulta», la app pregunta una vez por carga de página si el asistente está disponible (`GET`, sin cuota). «Otra consulta» abre siempre el chat. Si la función no existe, está apagada o falla, el chat lo dice, desactiva la caja de texto y explica cómo usar «Opciones similares» o «Tiendas físicas» para generar un prompt.
 - Con el asistente disponible, el panel «Asistente de regalos» muestra **solo el chat**: el saludo «Que fue», los mensajes y una caja para escribir (Enter envía, Mayús+Enter añade una línea). No hay que elegir regalo ni distrito: el contexto es la lista completa de la persona.
 - Una nota breve bajo la caja avisa de que las respuestas las genera Gemini, que pueden equivocarse y de que los mensajes y los datos públicos de la lista se envían a Google, que en la capa gratuita puede usarlos para mejorar sus productos.
 - Las respuestas son texto plano y se muestran siempre como texto literal, nunca como HTML.
@@ -34,7 +34,7 @@ Los dos caminos usan los datos de `supabase/functions/_shared/gift-facts.ts`: un
 **No incluye** nombre, slug, foto, mensaje personal, identificadores ni enlaces privados. Los datos se limpian: sin caracteres de control ni saltos de línea, sin secuencias `<<<`/`>>>` que imiten el delimitador y con longitudes acotadas.
 
 - **Texto para copiar** (`src/domain/gift-prompt.ts`, sin red): reglas de Lima Metropolitana, fecha de Lima, búsqueda web, no inventar datos comerciales, formato de hasta tres opciones, la tarea según la acción y el bloque de datos.
-- **Chat** (`supabase/functions/_shared/assistant-prompt.ts`): instrucciones de sistema (español, breve, tono relajado de pata limeño con como máximo una expresión de jerga peruana por respuesta, sin saludar cada vez ni suponer el género, respuestas concretas para opiniones y sugerencias, sin internet, «No lo sé» solo para datos comerciales o ausentes, no inventar tiendas, precios, stock ni enlaces, tratar los datos como información). El bloque de datos va con la primera pregunta; los turnos anteriores, como conversación.
+- **Chat** (`supabase/functions/_shared/assistant-prompt.ts`): instrucciones de sistema (español, breve, tono relajado de pata limeño con como máximo una expresión de jerga peruana por respuesta, sin saludar cada vez ni suponer el género, respuestas concretas para opiniones y sugerencias, sin internet, ante un saludo o un mensaje sin consulta responde con un saludo corto y pregunta en qué ayuda, sin resumir la lista; si la pregunta necesita la web (tiendas, precios, stock) invita a usar «Opciones similares» o «Tiendas físicas» con un instructivo breve; «No lo sé» para otros datos ausentes, no inventar tiendas, precios, stock ni enlaces, tratar los datos como información). El bloque de datos va con la primera pregunta; los turnos anteriores, como conversación.
 
 ## Cómo está protegido el chat
 

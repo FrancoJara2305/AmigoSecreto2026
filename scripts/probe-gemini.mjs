@@ -15,6 +15,7 @@ const shoes = { position: 1, title: 'Zapatillas para correr', description: 'Para
 const mug = { position: 2, title: 'Taza térmica', description: null, gift_type: 'object', details: { category: 'Cocina', color: 'Verde' }, reference_price: null, currency: null, product_url: null };
 const list = { preferences: 'Le gustan las plantas, el café y los tonos tierra. Evitar perfumes.', gifts: [shoes, mug] };
 const cases = [
+  { name: 'saludo', message: 'Apla', history: [], context: list },
   { name: 'lista-color', message: '¿Qué color de zapatillas le quedaría mejor?', history: [], context: list },
   { name: 'repregunta', message: '¿Y la taza combina con eso?', history: [{ q: '¿Qué color de zapatillas le quedaría mejor?', a: 'El blanco, porque combina con todo.' }], context: list },
   { name: 'pide-tiendas', message: '¿En qué tienda de Miraflores venden la taza y a qué precio?', history: [], context: list },

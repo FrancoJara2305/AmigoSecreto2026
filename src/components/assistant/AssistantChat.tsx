@@ -17,7 +17,8 @@ type Message = { role: 'user' | 'assistant'; text: string };
 
 // Chat about one person's whole public wishlist. The conversation lives only in this component:
 // closing the panel discards it. The last turns travel with each message so follow-ups make sense.
-export function AssistantChat({ participantId }: { participantId: string }) {
+// When the assistant is switched off the chat still opens, explains it and points to the prompt actions.
+export function AssistantChat({ participantId, available }: { participantId: string; available: boolean }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState(false);
@@ -30,13 +31,13 @@ export function AssistantChat({ participantId }: { participantId: string }) {
   const tooLong = text.length > ASSISTANT_LIMITS.message;
 
   useEffect(() => () => request.current?.abort(), []);
-  useEffect(() => { field.current?.focus(); }, []);
+  useEffect(() => { if (available) field.current?.focus(); else log.current?.focus(); }, [available]);
   // Keep the newest message in view inside the scrolling log.
   useEffect(() => { log.current?.lastElementChild?.scrollIntoView({ block: 'nearest' }); }, [messages, pending, error]);
 
   async function send(event?: FormEvent) {
     event?.preventDefault();
-    if (!text || tooLong || pending) return;
+    if (!available || !text || tooLong || pending) return;
     const history: AssistantTurn[] = [];
     for (let i = 0; i + 1 < messages.length; i += 2) history.push({ q: messages[i].text, a: messages[i + 1].text.slice(0, ASSISTANT_LIMITS.historyAnswer) });
     const controller = new AbortController(); request.current = controller;
@@ -61,8 +62,9 @@ export function AssistantChat({ participantId }: { participantId: string }) {
   }
 
   return <div className="assistant-chat">
-    <div ref={log} className="assistant-chat__log" role="log" aria-label="Conversación con el asistente" aria-live="polite">
+    <div ref={log} className="assistant-chat__log" tabIndex={-1} role="log" aria-label="Conversación con el asistente" aria-live="polite">
       <p className="assistant-bubble assistant-bubble--assistant">{GREETING}</p>
+      {!available && <p className="assistant-bubble assistant-bubble--assistant">Ahorita el chat no está disponible. Mientras tanto, cierra este panel, toca la burbuja y elige «Opciones similares» o «Tiendas físicas»: marcas el regalo, tocas «Generar prompt» y lo pegas en ChatGPT, Gemini o Claude con la búsqueda web activada.</p>}
       {messages.map((message, index) => <p key={index} className={`assistant-bubble assistant-bubble--${message.role}`}>
         {message.role === 'assistant' && <span className="sr-only">Asistente: </span>}{message.text}</p>)}
       {pending && <p className="assistant-bubble assistant-bubble--assistant assistant-bubble--typing"><LoaderCircle aria-hidden="true" className="spinner" />Escribiendo…</p>}
@@ -71,8 +73,8 @@ export function AssistantChat({ participantId }: { participantId: string }) {
     <form className="assistant-chat__compose" onSubmit={(event) => void send(event)}>
       <label className="sr-only" htmlFor={ids.field}>Tu mensaje</label>
       <textarea ref={field} id={ids.field} className="field__control assistant-chat__field" value={draft} rows={2} maxLength={ASSISTANT_LIMITS.message}
-        placeholder="Escribe tu pregunta…" aria-describedby={ids.note} onChange={(event) => setDraft(event.target.value)} onKeyDown={onKeyDown} />
-      <Button type="submit" className="button--icon assistant-chat__send" aria-label="Enviar" title="Enviar" disabled={!text || tooLong}
+        placeholder="Escribe tu pregunta…" disabled={!available} aria-describedby={ids.note} onChange={(event) => setDraft(event.target.value)} onKeyDown={onKeyDown} />
+      <Button type="submit" className="button--icon assistant-chat__send" aria-label="Enviar" title="Enviar" disabled={!available || !text || tooLong}
         aria-disabled={pending || undefined}><Send aria-hidden="true" /></Button>
     </form>
     <p id={ids.note} className="assistant-chat__note">Respuestas generadas por IA con Google Gemini; pueden equivocarse. Tus mensajes y los datos públicos de esta lista se envían a Google, que puede usarlos para mejorar sus productos.</p>
