@@ -4,7 +4,7 @@ import https from 'node:https';
 import { gzipSync } from 'node:zlib';
 import { productUrl,ProductImportError } from '../../supabase/functions/_shared/product-url.ts';
 import { publicAddress } from '../../server/product-fetch/ip-policy.ts';
-import { createProductDownloader,pinnedExchange,type PinnedAddress } from '../../server/product-fetch/transport.ts';
+import { createProductDownloader,pinnedExchange,HTML_BYTES,type PinnedAddress } from '../../server/product-fetch/transport.ts';
 // @ts-expect-error The test-only OpenSSL fixture is a small JavaScript helper.
 import { tlsFixture } from '../support/tls-fixture.mjs';
 test('reject literal/encoded IPs, local hosts, credentials, ports and alternate schemes before DNS',()=>{
@@ -36,7 +36,10 @@ test('rebind cannot replace the pinned address; every redirect gets fresh full D
   let count=0;const loop=createProductDownloader({resolve:async()=>[{address:'8.8.8.8',family:4}],exchange:async()=>{count++;return {status:302,location:'/loop',bytes:new Uint8Array(),contentType:''};}});
   await assert.rejects(loop('https://shop.example.com/'),(e:unknown)=>e instanceof ProductImportError&&e.code==='REDIRECT_LIMIT');assert.equal(count,4);
 });
-test('real Node TLS keeps original Host/SNI, validates certificate name, bounds compressed/chunked output and aborts',async(t)=>{
+test('real Node TLS keeps original Host/SNI, validates certificate name, keeps a bounded prefix of compressed/chunked/oversized output and aborts',async(t)=>{
+  // Falabella-like page: metadata first, >1 MB of scripts after, and a 2-byte char straddling the cut.
+  const head='<meta property="og:title" content="Traje gris">';
+  const heavy=Buffer.concat([Buffer.from(head),Buffer.alloc(HTML_BYTES-1-head.length,'a'),Buffer.from('é'.repeat(200000))]);
   const fixture=await tlsFixture();const seen:{host:string|undefined;servername:unknown;headers:Record<string,unknown>}[]=[];
   const server=https.createServer({key:fixture.key,cert:fixture.cert},(req,res)=>{
     seen.push({host:req.headers.host,servername:(req.socket as import('node:tls').TLSSocket).servername,headers:req.headers});
@@ -45,6 +48,7 @@ test('real Node TLS keeps original Host/SNI, validates certificate name, bounds 
     res.setHeader('Content-Type',req.url==='/json'?'application/json':'text/html; charset=utf-8');
     if(req.url==='/bomb'||req.url==='/gzip'){res.setHeader('Content-Encoding','gzip');res.end(gzipSync(req.url==='/bomb'?'x'.repeat(1048577):'<title>Compressed</title>'));return;}
     if(req.url==='/large'){res.write('x'.repeat(1048576));res.end('x');return;}
+    if(req.url==='/heavy'){res.end(heavy);return;}
     res.end('<title>Fixture</title>');
   });
   await new Promise<void>((resolve)=>server.listen(0,'127.0.0.1',resolve));const port=(server.address() as import('node:net').AddressInfo).port;
@@ -55,7 +59,9 @@ test('real Node TLS keeps original Host/SNI, validates certificate name, bounds 
   for(const header of ['authorization','cookie','x-edit-token','x-fetch-signature'])assert.equal(seen[0].headers[header],undefined);
   await assert.rejects(call('/','wrong.example.com'));
   assert.equal(new TextDecoder().decode((await call('/gzip')).bytes),'<title>Compressed</title>');
-  for(const path of ['/bomb','/large'])await assert.rejects(call(path),(e:unknown)=>e instanceof ProductImportError&&e.code==='TOO_LARGE');
+  for(const path of ['/bomb','/large'])assert.equal((await call(path)).bytes.length,HTML_BYTES);
+  const kept=(await call('/heavy')).bytes;assert.equal(kept.length,HTML_BYTES-1);
+  assert.ok(new TextDecoder('utf-8',{fatal:true}).decode(kept).startsWith(head));
   for(const path of ['/blocked','/json'])await assert.rejects(call(path));
   await assert.rejects(call('/slow','shop.example.com',AbortSignal.timeout(20)));
 });

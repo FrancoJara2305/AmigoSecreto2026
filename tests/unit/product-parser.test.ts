@@ -35,5 +35,13 @@ test('HTML/JS and unsafe image sources are removed, fields bounded and challenge
   assert.equal(r.fields.title?.length,120);assert.equal(r.fields.description,'Texto seguro');assert.equal(r.fields.image_url,undefined);
   assert.equal(parseProductMetadata('<title>Just a moment...</title><script>location.href="/challenge"</script>',final).fields.title,undefined);
   assert.equal(parseProductMetadata('<div id="app"></div><script>window.data={name:"JS only"}</script>',final).fields.title,undefined);
-  assert.throws(()=>parseProductMetadata('x'.repeat(1048577),final));
+  assert.ok(parseProductMetadata('x'.repeat(1048577),final).warnings.includes('NO_USABLE_METADATA'));
+});
+test('pages over 1 MB are read up to the cap instead of rejected (Falabella-style head)',()=>{
+  const r=parseProductMetadata('<meta property="og:title" content="Traje chaleco">'+ld({'@type':'Product',name:'Traje chaleco gris'})+'<script>'+'x'.repeat(1200000)+'</script>',final);
+  assert.equal(r.fields.title,'Traje chaleco gris');assert.equal(r.sources.title,'json-ld');
+});
+test('double-escaped HTML in JSON-LD becomes plain text and literal "null" values are dropped',()=>{
+  const r=parseProductMetadata(ld({'@type':'Product',name:'Chaleco',description:'&lt;ul&gt;&lt;li&gt;Chaleco formal&lt;/li&gt;&lt;li&gt;Para bodas&lt;/li&gt;&lt;/ul&gt;&lt;script&gt;alert(1)&lt;/script&gt;',color:'null',brand:'TIOZONEY'}),final);
+  assert.equal(r.fields.description,'Chaleco formal Para bodas');assert.equal(r.fields.color,undefined);assert.equal(r.fields.brand,'TIOZONEY');
 });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { draftFromGift } from '../../src/domain/gift-editor.ts';
-import { parseImportResult,defaultImportSelection,applyImportFields,importPriceIssue,type ImportMetadata } from '../../src/domain/product-import.ts';
+import { parseImportResult,defaultImportSelection,applyImportFields,importPriceIssue,importManualMessage,importUnavailableMessage,type ImportMetadata } from '../../src/domain/product-import.ts';
 import { sendProductImport,ProductLookupError } from '../../src/services/product-import.ts';
 import { createPrivateSession } from '../../src/services/private-session.ts';
 import type { AccessScope } from '../../src/domain/private-access.ts';
@@ -78,4 +78,9 @@ test('private session prevents foreign/duplicate imports, aborts on close and di
 test('organizer may import for selected participant and server denial revokes capability',async(t)=>{
   const session=createPrivateSession(async()=>({...scope,accessType:'organizer',participantId:null,participantSlug:null}),undefined,undefined,async()=>{throw new ProductLookupError('access');});t.after(()=>session.close());
   session.begin(token,'organizer');await session.verify();await assert.rejects(session.importProduct(owner,metadata.final_url,new AbortController().signal),ProductLookupError);assert.equal(session.snapshot().status,'unavailable');
+});
+test('manual import reasons get distinct messages; unknown reasons keep the generic one',()=>{
+  const texts=['NO_USABLE_METADATA','STORE_BLOCKED','TIMEOUT','UNSUPPORTED_CONTENT','TOO_LARGE','REDIRECT_LIMIT','BLOCKED_DESTINATION'].map(importManualMessage);
+  assert.equal(new Set(texts).size,texts.length);assert.ok(!texts.includes(importUnavailableMessage));
+  assert.equal(importManualMessage('UNAVAILABLE'),importUnavailableMessage);assert.equal(importManualMessage('SOMETHING_NEW'),importUnavailableMessage);
 });

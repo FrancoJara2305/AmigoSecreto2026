@@ -7,6 +7,17 @@ export type ImportMetadata = { fields: Partial<Record<ImportField,string>>; sour
 export type ImportResult = { status:'ok'|'partial'; metadata:ImportMetadata } | { status:'manual'; reason:string };
 export const importLabels:Record<ImportField,string> = {title:'Título',description:'Descripción',image_url:'Imagen',reference_price:'Precio referencial',currency:'Moneda',brand:'Marca',model:'Modelo',color:'Color',material:'Material'};
 const limits:Record<ImportField,number> = {title:120,description:2000,image_url:2048,reference_price:32,currency:3,brand:120,model:120,color:120,material:120};
+const manualMessages:Record<string,string> = {
+  NO_USABLE_METADATA:'No encontramos información utilizable. Puedes completar tu regalo manualmente.',
+  STORE_BLOCKED:'La tienda pidió una verificación anti-robots y no podemos leerla. Completa el regalo a mano; tu enlace sigue disponible.',
+  TIMEOUT:'La tienda tardó demasiado en responder. Intenta de nuevo en un momento o completa el regalo a mano.',
+  UNSUPPORTED_CONTENT:'El enlace no lleva a una página que podamos leer. Revisa que sea la página del producto.',
+  TOO_LARGE:'La página de la tienda es demasiado pesada para leerla. Completa el regalo a mano; tu enlace sigue disponible.',
+  REDIRECT_LIMIT:'La tienda redirige demasiadas veces. Prueba copiando el enlace directo del producto.',
+  BLOCKED_DESTINATION:'Ese enlace no apunta a una tienda pública que podamos consultar.',
+};
+export const importUnavailableMessage='La tienda no respondió o no permite esta consulta. Tu enlace sigue disponible.';
+export function importManualMessage(reason:string):string {return manualMessages[reason]??importUnavailableMessage;}
 export function parseImportResult(value:unknown):ImportResult {
   const data=value as Record<string,unknown>;
   if (!data || typeof data!=='object' || Array.isArray(data)) throw new Error('Invalid import');

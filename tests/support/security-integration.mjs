@@ -162,7 +162,8 @@ export async function securityFixture({base}){
       sql(`delete from private.rate_limits where key_hash=decode('${hash}','hex') and operation='import';`);
       const blocked=await importCall('https://blocked.example.com/product');assert.equal(blocked.data.reason,'BLOCKED_DESTINATION');assert.equal(sourceHits,hits+2);
       assert.equal((await importCall('https://shop.example.com/redirect')).data.reason,'BLOCKED_DESTINATION');
-      assert.equal((await importCall('https://shop.example.com/bomb')).data.reason,'TOO_LARGE');
+      // The gzip bomb is cut at 1 MB of decoded HTML; with no metadata it falls back to manual.
+      assert.equal((await importCall('https://shop.example.com/bomb')).data.reason,'NO_USABLE_METADATA');
       // Separate deterministic fallback cases from the five-per-minute import quota.
       sql(`delete from private.rate_limits where key_hash=decode('${hash}','hex') and operation='import';`);
       assert.equal((await importCall('https://shop.example.com/forbidden')).data.status,'manual');assert.equal((await importCall('https://shop.example.com/captcha')).data.status,'manual');

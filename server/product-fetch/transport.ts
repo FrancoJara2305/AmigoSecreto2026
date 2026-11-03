@@ -7,6 +7,16 @@ import { createGunzip,createBrotliDecompress,createInflate } from 'node:zlib';
 import { productUrl,ProductImportError } from '../../supabase/functions/_shared/product-url.ts';
 import { publicAddress,sameAddress } from './ip-policy.ts';
 export const HTML_BYTES=1024*1024;
+// Product metadata lives in <head>, but some stores (Falabella, Sodimac, Coolbox) ship >1 MB pages.
+// Keep the first HTML_BYTES instead of rejecting; the wire cap only guards against non-compressing junk.
+const WIRE_BYTES=2*HTML_BYTES;
+class Truncated extends Error {}
+// Drop a trailing incomplete UTF-8 sequence so the strict decoder does not reject a cut page.
+function utf8Prefix(bytes:Buffer):Buffer {
+  let start=bytes.length-1;while(start>=0 && start>bytes.length-4 && (bytes[start]&0xc0)===0x80)start--;
+  if(start<0||bytes[start]<0xc0)return bytes;
+  const need=bytes[start]>=0xf0?4:bytes[start]>=0xe0?3:2;return bytes.length-start<need?bytes.subarray(0,start):bytes;
+}
 export type PinnedAddress={address:string;family:4|6};
 export type HtmlDownload={url:string;bytes:Uint8Array;contentType:string};
 export type ExchangeResult={status:number;location?:string;bytes:Uint8Array;contentType:string};
@@ -42,15 +52,19 @@ export async function pinnedExchange(url:URL,pin:PinnedAddress,signal:AbortSigna
         if(status!==200){response.destroy();throw new ProductImportError('UNAVAILABLE');}
         const contentType=response.headers['content-type']??'';
         if(!/^(text\/html|application\/xhtml\+xml)(\s*;|$)/i.test(contentType) || contentType.length>160){response.destroy();throw new ProductImportError('UNSUPPORTED_CONTENT');}
-        const declared=Number(response.headers['content-length']);if(Number.isFinite(declared)&&declared>HTML_BYTES){response.destroy();throw new ProductImportError('TOO_LARGE');}
         const encoding=response.headers['content-encoding']?.trim().toLowerCase()??'identity';
         if(!['identity','gzip','br','deflate'].includes(encoding)){response.destroy();throw new ProductImportError('UNSUPPORTED_CONTENT');}
         let wire=0,decoded=0;const chunks:Buffer[]=[];
-        const boundedWire=new Transform({transform(chunk:Buffer,_encoding,done){wire+=chunk.length;done(wire>HTML_BYTES?new ProductImportError('TOO_LARGE'):null,chunk);}});
-        const output=new Writable({write(chunk:Buffer,_encoding,done){decoded+=chunk.length;if(decoded>HTML_BYTES){done(new ProductImportError('TOO_LARGE'));return;}chunks.push(chunk);done();}});
+        const boundedWire=new Transform({transform(chunk:Buffer,_encoding,done){wire+=chunk.length;done(wire>WIRE_BYTES?new ProductImportError('TOO_LARGE'):null,chunk);}});
+        const output=new Writable({write(chunk:Buffer,_encoding,done){
+          const room=HTML_BYTES-decoded;decoded+=chunk.length;
+          if(chunk.length>=room){chunks.push(chunk.subarray(0,room));done(new Truncated());return;}chunks.push(chunk);done();}});
         const decompressor=encoding==='gzip'?createGunzip():encoding==='br'?createBrotliDecompress():encoding==='deflate'?createInflate():null;
-        if(decompressor)await pipeline(response,boundedWire,decompressor,output,{signal});else await pipeline(response,boundedWire,output,{signal});
-        resolve({status,bytes:new Uint8Array(Buffer.concat(chunks)),contentType});
+        let truncated=false;
+        try{if(decompressor)await pipeline(response,boundedWire,decompressor,output,{signal});else await pipeline(response,boundedWire,output,{signal});}
+        catch(error){if(!(error instanceof Truncated))throw error;truncated=true;response.destroy();}
+        const bytes=Buffer.concat(chunks);
+        resolve({status,bytes:new Uint8Array(truncated?utf8Prefix(bytes):bytes),contentType});
       })().catch((error)=>{response.destroy();reject(error);});
     });
     request.maxHeadersCount=64;

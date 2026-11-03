@@ -81,7 +81,7 @@ export function createProductHandler(deps:ProductDependencies) {
       const access=await deps.callRpc('server_access',{p_action:'validate_access',p_token_hash:hash,p_participant_id:body.participant_id},signal);
       signal.throwIfAborted();
       if(!access.ok)return rpcFailure(access);
-      if(!metadata.fields.title)return manual(metadata.warnings.includes('STORE_BLOCKED')?'UNAVAILABLE':'NO_USABLE_METADATA');
+      if(!metadata.fields.title)return manual(metadata.warnings.includes('STORE_BLOCKED')?'STORE_BLOCKED':'NO_USABLE_METADATA');
       return reply(200,{status:metadata.warnings.length?'partial':'ok',metadata});
     }catch(error){return manual(error instanceof ProductImportError?error.code:signal.aborted?'TIMEOUT':'UNAVAILABLE');}
   };

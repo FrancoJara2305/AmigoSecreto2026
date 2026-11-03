@@ -67,3 +67,11 @@ test('HMAC domains, payload binding, TTL and unknown fields cannot be replayed a
   assert.throws(()=>fetchEnvelope({...JSON.parse(body),expires_at:Math.floor(Date.now()/1000)-1}));
   assert.throws(()=>fetchEnvelope({...JSON.parse(body),participant_id:owner}));
 });
+test('anti-bot challenge pages report STORE_BLOCKED instead of a generic failure',async()=>{
+  const handler=createProductHandler({allowedOrigins:[origin],proxyUrl:'https://transport.example.com/',secret,callRpc:async()=>({ok:true}),
+    fetcher:async(_url,options)=>{
+      const env=JSON.parse(String(options?.body));const raw=JSON.stringify({v:1,nonce:env.nonce,ok:true,url:env.url,content_type:'text/html',body:encodeBytes(new TextEncoder().encode('<title>Just a moment...</title>'))});
+      return new Response(raw,{headers:{'X-Fetch-Signature':await signFetch('response',raw,secret)}});
+    }});
+  const data=await (await handler(request())).json();assert.equal(data.status,'manual');assert.equal(data.reason,'STORE_BLOCKED');
+});

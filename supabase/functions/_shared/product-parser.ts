@@ -3,12 +3,19 @@ import { productUrl,ProductImportError } from './product-url.ts';
 export type MetadataField='title'|'description'|'image_url'|'reference_price'|'currency'|'brand'|'model'|'color'|'material';
 export interface ProductMetadata {fields:Partial<Record<MetadataField,string>>;sources:Partial<Record<MetadataField,'json-ld'|'open-graph'|'html'>>;warnings:string[];final_url:string}
 const limits:Record<MetadataField,number>={title:120,description:2000,image_url:2048,reference_price:32,currency:3,brand:120,model:120,color:120,material:120};
+function strip(html:string):string {
+  let output='',skip=0;
+  const block=(name:string)=>{if(/^(p|div|li|ul|ol|br|tr|td|h[1-6])$/.test(name))output+=' ';};
+  const parser=new Parser({onopentag(name){if(['script','style','iframe'].includes(name))skip++;block(name);},onclosetag(name){if(['script','style','iframe'].includes(name))skip=Math.max(0,skip-1);block(name);},ontext(text){if(!skip)output+=text;}},{decodeEntities:true});
+  parser.end(html.slice(0,16384));return output;
+}
 function plain(value:unknown,max:number):string|undefined {
   if(typeof value!=='string' && typeof value!=='number')return;
-  let output='',skip=0;
-  const parser=new Parser({onopentag(name){if(['script','style','iframe'].includes(name))skip++;},onclosetag(name){if(['script','style','iframe'].includes(name))skip=Math.max(0,skip-1);},ontext(text){if(!skip)output+=text;}},{decodeEntities:true});
-  parser.end(String(value).slice(0,16384));
+  let output=strip(String(value));
+  // Some stores (Falabella) escape HTML inside JSON-LD several times: re-strip while tags/entities remain.
+  for(let pass=0;pass<3 && /<\/?[a-z][^>]*>|&(?:[a-z]+|#\d+|#x[0-9a-f]+);/i.test(output);pass++)output=strip(output);
   output=output.replace(/[\x00-\x1f\x7f]/g,' ').replace(/\s+/gu,' ').trim();
+  if(/^(null|undefined|n\/a)$/i.test(output))return;
   let text='';for(const char of output){if(text.length+char.length>max)break;text+=char;}
   return text||undefined;
 }
@@ -25,9 +32,10 @@ function jsonSafe(text:string):unknown {
   return JSON.parse(text);
 }
 const types=(value:unknown,name:string):boolean=>typeof value==='string'?value===name||value===`https://schema.org/${name}`||value===`http://schema.org/${name}`:Array.isArray(value)&&value.some((v)=>types(v,name));
-export function parseProductMetadata(html:string,finalUrl:string):ProductMetadata {
+export function parseProductMetadata(page:string,finalUrl:string):ProductMetadata {
   const final=productUrl(finalUrl).href;
-  if(new TextEncoder().encode(html).length>1048576)throw new ProductImportError('TOO_LARGE');
+  // Metadata sits at the start of the document; a long page is read up to the cap, not rejected.
+  const html=page.length>1048576?page.slice(0,1048576):page;
   const result:ProductMetadata={fields:{},sources:{},warnings:[],final_url:final};
   const warn=(code:string)=>{if(!result.warnings.includes(code))result.warnings.push(code);};
   const put=(field:MetadataField,value:unknown,source:'json-ld'|'open-graph'|'html')=>{

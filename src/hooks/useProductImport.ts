@@ -1,6 +1,6 @@
 import { useEffect,useRef,useState } from 'react';
 import type { GiftDraft } from '../domain/gift-editor';
-import { applyImportFields,defaultImportSelection,importPriceIssue,type ImportField,type ImportMetadata } from '../domain/product-import';
+import { applyImportFields,defaultImportSelection,importManualMessage,importPriceIssue,importUnavailableMessage,type ImportField,type ImportMetadata } from '../domain/product-import';
 import { ProductLookupError } from '../services/product-import';
 import { usePrivateAccess } from '../app/PrivateAccessProvider';
 
@@ -33,14 +33,14 @@ export function useProductImport(draft:GiftDraft,participantId:string,enabled:bo
     try {
       const result=await importProduct(participantId,draft.product_url,attempt.controller.signal);
       if(request.current!==attempt || attempt.controller.signal.aborted || current.current.snapshot!==attempt.snapshot || !current.current.enabled)return;
-      if(result.status==='manual')setMessage(result.reason==='NO_USABLE_METADATA'?'No encontramos información utilizable. Puedes completar tu regalo manualmente.':'La tienda no respondió o no permite esta consulta. Tu enlace sigue disponible.');
+      if(result.status==='manual')setMessage(importManualMessage(result.reason));
       else {setPreview({metadata:result.metadata,snapshot:attempt.snapshot});setSelected(new Set(defaultImportSelection(draft,result.metadata)));}
     } catch(error) {
       if(request.current!==attempt || attempt.controller.signal.aborted)return;
       if(error instanceof ProductLookupError && error.kind==='rate') {
         const seconds=Math.max(1,error.retryAfter);setRetryAt(Date.now()+seconds*1000);setWaiting(true);
         setMessage(`Has realizado varias importaciones. Espera ${seconds>=60?`${Math.ceil(seconds/60)} minuto(s)`:`${seconds} segundo(s)`} antes de volver a intentarlo. Tu borrador se conserva.`);
-      } else setMessage(error instanceof ProductLookupError && error.kind==='invalid'?'Usa un enlace HTTPS público de un producto.':error instanceof ProductLookupError && error.kind==='access'?'Tu acceso ya no permite importar. El borrador se conserva.':'La tienda no respondió o no permite esta consulta. Tu enlace sigue disponible.');
+      } else setMessage(error instanceof ProductLookupError && error.kind==='invalid'?'Usa un enlace HTTPS público de un producto.':error instanceof ProductLookupError && error.kind==='access'?'Tu acceso ya no permite importar. El borrador se conserva.':importUnavailableMessage);
     } finally {if(request.current===attempt){request.current=null;setLoading(false);}}
   }
   function toggle(field:ImportField) {setSelected((old)=>{const next=new Set(old);if(next.has(field))next.delete(field);else next.add(field);return next;});}
