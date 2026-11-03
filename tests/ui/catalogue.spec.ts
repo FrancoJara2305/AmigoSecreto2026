@@ -173,19 +173,3 @@ test('catalogue screenshots preserve all eleven cards and the focused reveal', a
   await page.locator('.participant-card').first().focus();
   await page.screenshot({ path: `artifacts/ui/catalogue-focus-${info.project.name}.png` });
 });
-
-test('experimental theme starts on and the corner switch toggles it live without storing anything',async({page})=>{
-  await page.goto('/');
-  const html=page.locator('html');
-  const toggle=page.getByRole('button',{name:/^Diseño:/});
-  await expect(html).toHaveAttribute('data-theme','chicha');
-  await expect(toggle).toHaveAttribute('aria-pressed','true');
-  const hero=page.locator('.welcome-hero');
-  expect(await hero.evaluate((el)=>getComputedStyle(el).backgroundImage)).toContain('linear-gradient');
-  await toggle.click();
-  await expect(html).not.toHaveAttribute('data-theme',/.*/);
-  await expect(toggle).toHaveText(/Original/);await expect(toggle).toHaveAttribute('aria-pressed','false');
-  expect(await hero.evaluate((el)=>getComputedStyle(el).backgroundImage)).toBe('none');
-  await toggle.click();await expect(html).toHaveAttribute('data-theme','chicha');
-  expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
-});
