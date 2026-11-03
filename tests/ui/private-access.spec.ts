@@ -43,7 +43,7 @@ test('private fragment is removed before verification, is sent only in a header 
   });
   await enter(page);
   await expect(page.getByRole('link', { name: 'Editar mi perfil', exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Añadir regalo a la opción/ })).toHaveCount(3);
+  await expect(page.getByRole('link', { name: /Pedir mi regalo sin roche en la opción/ })).toHaveCount(3);
   expect(privateCalls).toHaveLength(1); expect(leaked).toEqual([]);
   expect(await page.evaluate(() => [localStorage.length,sessionStorage.length])).toEqual([0,0]);
   expect(await page.evaluate(() => JSON.stringify(history.state))).not.toContain(credential);
@@ -82,14 +82,14 @@ test('private destination revalidates its participant, closing erases access wit
   const targets: (string | undefined)[] = [];
   await validate(page, (route) => { targets.push(route.request().postDataJSON().participant_id); return route.fulfill({ json: participant, headers: cors }); });
   await enter(page);
-  await page.getByRole('link', { name: 'Añadir regalo a la opción 2' }).click();
+  await page.getByRole('link', { name: 'Pedir mi regalo sin roche en la opción 2' }).click();
   await expect(page.getByRole('heading', { name: 'Tu opción 2', exact: true })).toBeFocused();
   expect(targets).toContain(owner);
   await page.getByRole('button', { name: 'Cerrar acceso de edición', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Este enlace de edición no está disponible' })).toBeVisible();
   await page.getByRole('link', { name: 'Volver al catálogo' }).click();
   await page.getByRole('list', { name: 'Participantes', exact: true }).getByRole('link').first().click();
-  await expect(page.getByRole('heading', { name: 'Regalo pendiente', exact: true })).toHaveCount(3);
+  await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(3);
   await expect(page.getByRole('link', { name: 'Editar mi perfil', exact: true })).toHaveCount(0);
 });
 

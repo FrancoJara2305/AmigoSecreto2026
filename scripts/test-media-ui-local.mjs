@@ -34,7 +34,7 @@ try {
   browser=await chromium.launch({channel:'msedge'}); const page=await browser.newPage({viewport:{width:1280,height:900},locale:'es-PE'});
   await page.route('**/*',(route)=>[site,new URL(base).origin].includes(new URL(route.request().url()).origin)?route.continue():route.abort());
   await page.goto(`${site}/acceso#token=${token}`);
-  await page.getByRole('link',{name:'Añadir regalo a la opción 1',exact:true}).click();
+  await page.getByRole('link',{name:'Pedir mi regalo sin roche en la opción 1',exact:true}).click();
   await page.getByLabel('Título del regalo').fill('Una imagen desde el navegador');
   await page.getByLabel('Subir imagen',{exact:true}).setInputFiles(fileURLToPath(new URL('../tests/fixtures/images/small.png',import.meta.url)));
   await expect(page.getByAltText('Vista previa del regalo')).toBeVisible();

@@ -35,7 +35,7 @@ export async function runImportBrowser(sql) {
     page.on('response',(response)=>{const path=new URL(response.url()).pathname;if(path.startsWith('/functions/')||path.startsWith('/rest/'))responses.push(`${path}:${response.status()}`);});
     await page.route('**/*',(route)=>[site,base].includes(new URL(route.request().url()).origin)?route.continue():route.abort());
     phase='private entry';await page.goto(`${site}/acceso#token=${token}`);
-    await page.getByRole('link',{name:'Añadir regalo a la opción 1',exact:true}).click();
+    await page.getByRole('link',{name:'Pedir mi regalo sin roche en la opción 1',exact:true}).click();
     phase='editor';await page.getByLabel('Enlace del producto').fill('https://shop.example.com/product');
     await page.getByRole('button',{name:'Importar información',exact:true}).click();
     const preview=page.getByRole('region',{name:'Revisa lo que encontramos'});

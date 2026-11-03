@@ -187,7 +187,7 @@ test('catalogue photo cards swap the name for a full-card photo on hover, focus 
     const box=(await photo.boundingBox())!,card=(await alice.boundingBox())!;
     expect(Math.abs(box.width-card.width)).toBeLessThanOrEqual(2);expect(Math.abs(box.height-card.height)).toBeLessThanOrEqual(2);
     expect(await photo.locator('img').evaluate((element)=>getComputedStyle(element).objectFit)).toBe('cover');
-    await expect(alice.getByText('0 de 3 ideas')).toHaveCSS('color','rgb(255, 250, 242)');
+    await expect(alice.getByText('0 de 3 fijas')).toHaveCSS('color','rgb(255, 250, 242)');
   };
   if(!hasTouch){
     await alice.hover();await reveal();

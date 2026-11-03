@@ -20,7 +20,7 @@ export function AppLayout({ title = 'Amigo Secreto 2026', children }: { title?: 
         </nav>
         : <nav aria-label="Navegación principal"><Link to="/#participantes">Participantes</Link></nav>}</header>
     <main id="contenido" tabIndex={-1}>{children}</main>
-    <div className="catalogue-closing page-width"><Leaf aria-hidden="true" /><p>Lo bonito es pensar en alguien.</p><span aria-hidden="true">✦</span></div>
-    <footer className="catalogue-footer page-width"><p>Hecho para compartir un poquito de ilusión.</p><Link to="#inicio">Volver arriba<ArrowUpRight aria-hidden="true" /></Link></footer>
+    <div className="catalogue-closing page-width"><Leaf aria-hidden="true" /><p>Si no te gusta el regalo, sonríe pa la foto. ¡Después haces tu drama en privado!</p><span aria-hidden="true">✦</span></div>
+    <footer className="catalogue-footer page-width"><p>Hasta acá llega el app, sapo.</p><Link to="#inicio">Volver arriba<ArrowUpRight aria-hidden="true" /></Link></footer>
   </div>;
 }

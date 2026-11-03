@@ -18,7 +18,7 @@ function GiftCard({ gift,priority }: { gift: GiftData; priority:boolean }) {
 }
 function PendingGiftCard() {
   return <div className="pending-gift"><div className="pending-gift__art" aria-hidden="true"><span><Gift strokeWidth={1.2} /></span><Sparkles className="pending-gift__spark" /></div>
-    <h3>Regalo pendiente</h3><p>Pronto habrá una pista por aquí.</p></div>;
+    <h3>Aún no suelta prenda</h3><p>Paciencia, seguro está buscando el link en Polvos Azules o Gamarra.</p></div>;
 }
 export function WishlistGrid({ slots, actions }: { slots: GiftSlot[]; actions?: (slot: GiftSlot) => ReactNode }) {
   return <ol className="wishlist-grid" aria-label="Tres opciones de regalo">{slots.map(({ position, gift }) => <li key={position} className={`gift-card${gift ? '' : ' gift-card--pending'}`}>

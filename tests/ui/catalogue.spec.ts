@@ -26,7 +26,7 @@ test('SQL-backed preview loads exactly the requested names, empty lists and two 
   await ready(page);
   const list = page.getByRole('list', { name: 'Participantes', exact: true });
   await expect(list.getByRole('heading', { level: 3 })).toHaveText(names);
-  await expect(list.getByText('0 de 3 ideas', { exact: true })).toHaveCount(11);
+  await expect(list.getByText('0 de 3 fijas', { exact: true })).toHaveCount(11);
   await expect(page.getByText('11 participantes', { exact: true })).toBeVisible();
   await expect(list.getByRole('link').first()).toHaveAttribute('href', '/participante/melyza');
   await expect(list.getByRole('link').nth(9)).toHaveAttribute('href', '/participante/derek-leonardo');
@@ -55,7 +55,7 @@ test('hero and header catalogue anchors move focus, cards are native links and b
   page.on('request', (request) => { if (request.url().startsWith(`${api}/rest/v1/participants`) && !new URL(request.url()).searchParams.has('slug')) requests++; });
   await ready(page);
   await page.getByRole('link', { name: 'Ver participantes', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Pequeñas pistas para un gran regalo' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 2, name: 'Las fijas para no regalar una taza con chocolates' })).toBeFocused();
   const card = page.getByRole('list', { name: 'Participantes', exact: true }).getByRole('link').first();
   await card.focus(); await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/participante\/melyza$/);
@@ -97,7 +97,7 @@ test('section links scroll gradually and keep keyboard focus, with reduced-motio
     window.addEventListener('scroll', () => (window as any).__sectionScroll.push(window.scrollY));
   });
   await page.getByRole('link', { name: 'Ver participantes', exact: true }).click();
-  const heading = page.getByRole('heading', { name: 'Pequeñas pistas para un gran regalo', exact: true });
+  const heading = page.getByRole('heading', { name: 'Las fijas para no regalar una taza con chocolates', exact: true });
   await expect(heading).toBeFocused();
   await expect.poll(() => heading.evaluate(element => Math.abs(element.getBoundingClientRect().top) < 240)).toBe(true);
   const motion = await page.evaluate(() => ({ positions: (window as any).__sectionScroll, scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior }));
@@ -149,7 +149,7 @@ test('edited participant name and count render from data and broken photos fall 
   const first = page.locator('.participant-card').first();
   await first.scrollIntoViewIfNeeded();
   await expect(first.getByRole('heading')).toHaveText('Melyza actualizada');
-  await expect(first.getByText('2 de 3 ideas')).toBeVisible();
+  await expect(first.getByText('2 de 3 fijas')).toBeVisible();
   await expect(first.locator('.participant-avatar > svg')).toHaveCount(1);
   await expect(first.locator('img')).toHaveCount(0);
   await expect(page.locator('.participant-avatar__initials').first()).toHaveText('NM');

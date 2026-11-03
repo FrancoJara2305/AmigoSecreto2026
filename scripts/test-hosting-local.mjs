@@ -70,7 +70,7 @@ try{
     // Invalid sample form still validates under CSP; no native form navigation.
     await expect(page.getByRole('heading',{level:1})).toBeVisible();
     await page.goto(`${origin}/acceso#token=${credential}`);await expect(page.getByRole('heading',{name:'Melyza',exact:true})).toBeVisible();
-    await page.getByRole('link',{name:'Añadir regalo a la opción 1',exact:true}).click();await page.getByLabel('Título del regalo').fill('Guardado bajo CSP');
+    await page.getByRole('link',{name:'Pedir mi regalo sin roche en la opción 1',exact:true}).click();await page.getByLabel('Título del regalo').fill('Guardado bajo CSP');
     await page.getByRole('button',{name:'Guardar regalo',exact:true}).click();await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.',{exact:true})).toBeVisible();assert.equal(writes,1);
     assert.deepEqual(await page.evaluate(()=>window.__csp),[]);
     await page.screenshot({path:resolve(directory,`csp-${name}.png`),fullPage:true});

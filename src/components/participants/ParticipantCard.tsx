@@ -34,6 +34,6 @@ export function ParticipantCard({ participant, index }: { participant: Catalogue
       ? <span className="participant-card__photo" aria-hidden="true"><img src={photo} alt="" width="480" height="480" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setBroken(photo)} /></span>
       : <span className="participant-card__avatar"><ParticipantAvatar participant={{ ...participant, photo_path: null, photo_url: null }} /></span>}
     <h3 className="participant-card__name">{participant.name}</h3>
-    <span className="participant-card__bottom"><span>{participant.giftCount} de 3 ideas</span><ArrowUpRight aria-hidden="true" /></span>
+    <span className="participant-card__bottom"><span>{participant.giftCount} de 3 fijas</span><ArrowUpRight aria-hidden="true" /></span>
   </Link></li>;
 }

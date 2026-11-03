@@ -63,7 +63,7 @@ export async function editorFixture(page: Page, initial: Gift[] = [], organizer 
 }
 export async function openEditor(page: Page, position = 1) {
   await page.goto(`/acceso#token=${fixtureCredential}`);
-  await page.getByRole('link', { name: `Añadir regalo a la opción ${position}`, exact: true }).or(page.getByRole('link', { name: `Editar regalo de la opción ${position}`, exact: true })).click();
+  await page.getByRole('link', { name: `Pedir mi regalo sin roche en la opción ${position}`, exact: true }).or(page.getByRole('link', { name: `Editar regalo de la opción ${position}`, exact: true })).click();
   await expect(page.getByRole('heading', { name: `Tu opción ${position}`, exact: true })).toBeFocused();
   await expect(page.getByLabel('Título del regalo')).toBeEnabled();
 }

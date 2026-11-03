@@ -90,7 +90,7 @@ try{
     await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:device==='mobile'?150:20,downloadThroughput:(device==='mobile'?1_600_000:10_000_000)/8,uploadThroughput:750_000/8});
     await cdp.send('Emulation.setCPUThrottlingRate',{rate:device==='mobile'?4:1});
     await page.goto(app+path,{waitUntil:'load'});
-    await page.getByRole('heading',{name:path==='/'?'Pequeñas pistas para un gran regalo':'Melyza',exact:true}).waitFor();
+    await page.getByRole('heading',{name:path==='/'?'Las fijas para no regalar una taza con chocolates':'Melyza',exact:true}).waitFor();
     if(path==='/')await page.getByRole('list',{name:'Participantes',exact:true}).waitFor();
     else await page.getByRole('heading',{name:'Un libro para las tardes',exact:true}).waitFor();
     const contentReadyMs=await page.evaluate(()=>performance.now());

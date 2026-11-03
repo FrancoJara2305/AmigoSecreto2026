@@ -15,11 +15,11 @@ test('title and default type create one independent option, save a new version a
   expect(state.writes[1].action).toBe('update_gift'); expect(state.writes[1].expected_version).toBe(1);
   await page.getByRole('link', { name: 'Volver a la lista', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Un libro de relatos', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Regalo pendiente', exact: true })).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(2);
   await page.reload(); await expect(page.getByRole('heading', { name: 'Un libro de relatos', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Editar mi perfil', exact: true })).toHaveCount(0);
   await page.getByRole('link', { name: 'Volver a participantes', exact: true }).click();
-  await expect(page.locator('.participant-card').first()).toContainText('1 de 3 ideas');
+  await expect(page.locator('.participant-card').first()).toContainText('1 de 3 fijas');
 });
 
 test('validation keeps typed input, supports zero and USD and rejects excess decimals without a request', async ({ page }) => {
@@ -156,7 +156,7 @@ test('mutation 429 waits before explicit retry and retains the draft without sen
 test('revalidation while typing preserves draft and organizer can create for the selected person', async ({ page }) => {
   const state = await editorFixture(page, [], true, '11111111-1111-4111-8111-000000000002');
   await page.goto(`/organizador/acceso#token=${fixtureCredential}`); await page.getByRole('link', { name: 'Ver participantes', exact: true }).click();
-  await page.getByRole('list', { name: 'Participantes', exact: true }).getByRole('link').nth(1).click(); await page.getByRole('link', { name: 'Añadir regalo a la opción 1', exact: true }).click();
+  await page.getByRole('list', { name: 'Participantes', exact: true }).getByRole('link').nth(1).click(); await page.getByRole('link', { name: 'Pedir mi regalo sin roche en la opción 1', exact: true }).click();
   await expect(page.getByLabel('Título del regalo')).toBeEnabled(); await page.getByLabel('Título del regalo').fill('Para Karina');
   await page.evaluate(() => window.dispatchEvent(new Event('focus'))); await expect(page.getByLabel('Título del regalo')).toBeEnabled(); await expect(page.getByLabel('Título del regalo')).toHaveValue('Para Karina');
   await page.getByRole('button', { name: 'Guardar regalo', exact: true }).click(); await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();

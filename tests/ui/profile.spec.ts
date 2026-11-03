@@ -43,9 +43,9 @@ test('all-empty SQL profile has exactly three pending positions, no editing and 
   await page.goto('/participante/melyza');
   await expect(page.getByRole('heading', { name: 'Melyza', exact: true })).toBeFocused();
   await expect(page.getByRole('list', { name: 'Tres opciones de regalo' }).getByRole('listitem')).toHaveCount(3);
-  await expect(page.getByRole('heading', { name: 'Regalo pendiente', exact: true })).toHaveCount(3);
+  await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(3);
   await expect(page.getByText('Opción 1', { exact: true })).toBeVisible();
-  await expect(page.getByText('Todavía no se han añadido gustos o consideraciones generales.')).toBeVisible();
+  await expect(page.getByText('Todavía no pone ni su talla ni qué color le queda mal. Si le compras algo al ojo, es bajo tu propio riesgo.')).toBeVisible();
   await expect(page.getByRole('button', { name: /editar|añadir|limpiar/i })).toHaveCount(0);
   expect(reads).toHaveLength(1); expect(writes).toEqual([]);
   expect((await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze()).violations).toEqual([]);
@@ -62,11 +62,11 @@ test('partial list keeps empty position two, footwear system, foreign price and 
   const items = page.getByRole('list', { name: 'Tres opciones de regalo' }).getByRole('listitem');
   await expect(items).toHaveCount(3);
   await expect(items.nth(0).getByRole('heading')).toHaveText('Un libro de relatos');
-  await expect(items.nth(1).getByRole('heading')).toHaveText('Regalo pendiente');
+  await expect(items.nth(1).getByRole('heading')).toHaveText('Aún no suelta prenda');
   await expect(items.nth(2).getByRole('heading')).toHaveText('Zapatillas cómodas');
   await expect(items.nth(2)).toContainText('Numeración'); await expect(items.nth(2)).toContainText('42'); await expect(items.nth(2)).toContainText('EU');
   await expect(items.nth(2)).toContainText(/USD\s*19[.,]90/);
-  await expect(page.getByRole('region', { name: 'Un poquito sobre mis gustos' })).toContainText('Evitar las fragancias intensas.');
+  await expect(page.getByRole('region', { name: 'Mis gustos, tallas y demás detalles' })).toContainText('Evitar las fragancias intensas.');
   await expect(items.nth(0)).not.toContainText('fragancias');
   const shop = page.getByRole('link', { name: /Ver en la tienda/ });
   await expect(shop).toHaveAttribute('target', '_blank'); await expect(shop).toHaveAttribute('rel', 'noopener noreferrer');
@@ -76,13 +76,13 @@ test('partial list keeps empty position two, footwear system, foreign price and 
 test('complete and one-gift lists preserve zero price and omit absent fields', async ({ page }) => {
   await filled(page, { gifts: [gifts[0], { ...baseGift, id: 'second', position: 2, title: 'Una taza', reference_price: 0 }, gifts[1]] });
   await page.goto('/participante/melyza');
-  await expect(page.getByRole('heading', { name: 'Regalo pendiente', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(0);
   await expect(page.getByText(/S\/.*0[.,]00/)).toBeVisible();
   await page.unroute(`${api}/rest/v1/participants?**`);
   await filled(page, { gifts: [{ ...baseGift, id: 'only', position: 2, title: 'Una sola idea' }], personal_message: null, general_preferences: null });
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Una sola idea' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Regalo pendiente', exact: true })).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(2);
   await expect(page.getByText('Precio referencial', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /Ver en la tienda/ })).toHaveCount(0);
 });
@@ -157,5 +157,5 @@ test('changing slug while a request is delayed never shows the previous particip
   await page.getByRole('list', { name: 'Participantes', exact: true }).getByRole('link').nth(1).click();
   await expect(page.getByRole('heading', { name: 'Karina', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Un libro de relatos', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Regalo pendiente', exact: true })).toHaveCount(3);
+  await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(3);
 });
