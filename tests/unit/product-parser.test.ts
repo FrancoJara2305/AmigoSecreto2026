@@ -45,3 +45,15 @@ test('double-escaped HTML in JSON-LD becomes plain text and literal "null" value
   const r=parseProductMetadata(ld({'@type':'Product',name:'Chaleco',description:'&lt;ul&gt;&lt;li&gt;Chaleco formal&lt;/li&gt;&lt;li&gt;Para bodas&lt;/li&gt;&lt;/ul&gt;&lt;script&gt;alert(1)&lt;/script&gt;',color:'null',brand:'TIOZONEY'}),final);
   assert.equal(r.fields.description,'Chaleco formal Para bodas');assert.equal(r.fields.color,undefined);assert.equal(r.fields.brand,'TIOZONEY');
 });
+
+test('descriptions drop seller shipping, review and notice boilerplate and stay short',async()=>{
+  const { productSummary } = await import('../../supabase/functions/_shared/product-parser.ts');
+  const falabella='Chaleco de traje formal delgado con cuello en V para hombre Chaleco de boda OCASIONES - Este traje chalecos se adapta para ocasiones formales o informales, como banquetes de boda, fiesta de trabajo paquete: 1pc x chaleco de traje para hombre ENVÍO Enviaremos su pedido dentro de las 72 horas posteriores al pago. Gracias por su paciencia y apoyo. 1. Si está satisfecho con nuestros productos y servicios, deje un comentario positivo de 5 estrellas. Aviso bondadoso: 1. Gracias por comprar nuestro producto.';
+  assert.equal(productSummary(falabella),'Chaleco de traje formal delgado con cuello en V para hombre Chaleco de boda OCASIONES - Este traje chalecos se adapta para ocasiones formales o informales, como banquetes de boda, fiesta de trabajo paquete: 1pc x chaleco de traje para hombre');
+  assert.equal(productSummary('Taza térmica de acero, 500 ml.'),'Taza térmica de acero, 500 ml.','plain descriptions unchanged');
+  assert.equal(productSummary('Envío gratis por compras mayores'),'Envío gratis por compras mayores','a marker at the very start never empties the text');
+  const long=('Frase de producto con detalles útiles. ').repeat(20);
+  const short=productSummary(long);
+  assert.ok(short.length<=400&&short.endsWith('.'),'long text cut at a sentence end');
+  assert.ok(productSummary('palabra '.repeat(80)).endsWith('…'));
+});

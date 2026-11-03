@@ -7,13 +7,15 @@ test('title and default type create one independent option, save a new version a
   const state = await editorFixture(page); await openEditor(page, 2);
   await page.getByLabel('Título del regalo').fill('Un libro para las tardes');
   await page.getByRole('button', { name: 'Guardar regalo', exact: true }).click();
-  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();
+  // Saving returns to the list; the option can still be edited from there.
+  await expect(page).toHaveURL(/\/participante\/melyza$/);
+  await expect(page.getByRole('heading', { name: 'Un libro para las tardes', exact: true })).toBeVisible();
   expect(state.writes).toHaveLength(1); expect(state.writes[0].action).toBe('create_gift'); expect(state.writes[0].position).toBe(2);
+  await page.getByRole('link', { name: 'Editar regalo de la opción 2', exact: true }).click();
   await page.getByLabel('Título del regalo').fill('Un libro de relatos');
   await page.getByRole('button', { name: 'Guardar regalo', exact: true }).click();
-  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();
+  await expect(page).toHaveURL(/\/participante\/melyza$/);
   expect(state.writes[1].action).toBe('update_gift'); expect(state.writes[1].expected_version).toBe(1);
-  await page.getByRole('link', { name: 'Volver a la lista', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Un libro de relatos', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Aún no suelta prenda', exact: true })).toHaveCount(2);
   await page.reload(); await expect(page.getByRole('heading', { name: 'Un libro de relatos', exact: true })).toBeVisible();
@@ -124,7 +126,8 @@ test('pending saves prevent duplicates; denied writes retain the form without pe
   await page.getByLabel('Título del regalo').fill('Una sola petición'); await page.getByRole('button', { name: 'Guardar regalo', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Guardando…', exact: true })).toBeDisabled();
   await expect(page.getByLabel('Título del regalo')).toBeDisabled();
-  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible(); expect(state.writes).toHaveLength(1);
+  await expect(page).toHaveURL(/\/participante\/melyza$/); expect(state.writes).toHaveLength(1);
+  await page.getByRole('link', { name: 'Editar regalo de la opción 1', exact: true }).click();
   await page.getByLabel('Título del regalo').fill('Un cambio sin acceso'); state.fault = 'access';
   await page.getByRole('button', { name: 'Guardar regalo', exact: true }).click();
   await expect(page.getByText('El acceso ya no permite guardar.', { exact: false })).toBeVisible();

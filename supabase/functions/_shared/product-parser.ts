@@ -19,6 +19,19 @@ function plain(value:unknown,max:number):string|undefined {
   let text='';for(const char of output){if(text.length+char.length>max)break;text+=char;}
   return text||undefined;
 }
+// Marketplace descriptions often append the seller's shipping policy, review requests and notices.
+// Keep only the product part: cut at the first such marker, then at a sentence end near DESCRIPTION_MAX.
+const DESCRIPTION_MAX=400;
+const boilerplate=/(?:^|[\s.:;!-])(?:env[ií]os?\b|despacho\b|entrega\b|tiempo estimado|log[ií]stica|aviso\b|nota\s*:|pol[ií]tica|garant[ií]a|devoluci[oó]n|cambios y devoluciones|si (?:est[aá]|usted est[aá]) satisfecho|comentario (?:positivo|negativo)|calificaci[oó]n|\d\s*estrellas|gracias por (?:su|comprar|tu)|cont[aá]ctenos|debido a la diferente|shipping\b|delivery\b|feedback\b|warranty\b|notice\b)/i;
+export function productSummary(text:string):string {
+  const marker=boilerplate.exec(text);
+  let summary=(marker&&marker.index>=20?text.slice(0,marker.index):text).trim().replace(/[\s,;:–—-]+$/u,'');
+  if(summary.length>DESCRIPTION_MAX){
+    const cut=summary.slice(0,DESCRIPTION_MAX),end=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('! '),cut.lastIndexOf('? '));
+    summary=end>=DESCRIPTION_MAX/2?cut.slice(0,end+1):`${cut.slice(0,cut.lastIndexOf(' ')).trimEnd()}…`;
+  }
+  return summary;
+}
 function price(value:unknown):string|undefined {
   const text=typeof value==='number'?String(value):typeof value==='string'?value.trim():'';
   if(!/^\d{1,10}([.,]\d{1,2})?$/.test(text))return;
@@ -41,6 +54,7 @@ export function parseProductMetadata(page:string,finalUrl:string):ProductMetadat
   const put=(field:MetadataField,value:unknown,source:'json-ld'|'open-graph'|'html')=>{
     if(result.fields[field]!==undefined)return;
     let text=field==='reference_price'?price(value):field==='currency'?currency(value):plain(value,limits[field]);
+    if(field==='description'&&text)text=productSummary(text)||undefined;
     if(field==='image_url' && text){try{text=productUrl(text,final).href;}catch{text=undefined;}}
     if(text!==undefined){result.fields[field]=text;result.sources[field]=source;}
   };

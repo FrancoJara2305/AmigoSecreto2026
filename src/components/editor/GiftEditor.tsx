@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeft, Check, Link2, RotateCcw, Trash2 } from 'lucide-react';
 import { AppLink as Link } from '../ui/AppLink';
-import { useBeforeUnload, useBlocker } from 'react-router';
+import { useBeforeUnload, useBlocker, useNavigate } from 'react-router';
 import type { Gift } from '../../domain/database.types';
 import { displayPrice, giftDetails } from '../../domain/profile';
 import { useGiftEditor } from '../../hooks/useGiftEditor';
@@ -19,6 +19,7 @@ import { GiftProductImport } from './GiftProductImport';
 export function GiftEditor({ participantId, name, slug, position, initial, canWrite }: { participantId: string; name: string; slug: string; position: number; initial: Gift | null; canWrite: boolean }) {
   const editor = useGiftEditor(participantId, slug, position, initial);
   const { state: access, verify, close } = usePrivateAccess(), track = useProgress();
+  const navigate = useNavigate();
   const [confirm, setConfirm] = useState<'delete' | 'load' | 'close' | null>(null);
   const [accessWaiting, setAccessWaiting] = useState(false);
   const accessRetryAt = access.status === 'temporary' ? access.retryAt : 0;
@@ -30,7 +31,13 @@ export function GiftEditor({ participantId, name, slug, position, initial, canWr
   useEffect(() => { if (blocker.state === 'blocked' && !editor.dirty && !editor.busy) blocker.proceed(); }, [blocker, editor.dirty, editor.busy]);
   const disabled = editor.busy || !canWrite;
   const errors = Object.entries(editor.fields).filter(([,message]) => !!message).map(([key,message]) => ({ id: document.getElementById(`gift-${key}`) ? `gift-${key}` : 'editor-feedback', message }));
-  async function submit(event: FormEvent) { event.preventDefault(); if (canWrite) await track(editor.save(), { busy: 'Guardando tu regalo…', done: 'Regalo guardado' }); }
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!canWrite) return;
+    // Once saved, go back to the list; the gift stays editable from there. The unsaved-changes guard
+    // lets this through as soon as the editor is clean again.
+    if (await track(editor.save(), { busy: 'Guardando tu regalo…', done: 'Regalo guardado' })) navigate(`/participante/${encodeURIComponent(slug)}`);
+  }
   async function confirmAction() {
     if (confirm === 'delete') { await track(editor.remove(), { busy: 'Limpiando la opción…', done: 'Opción limpia' }); setConfirm(null); requestAnimationFrame(() => document.getElementById('gift-title')?.focus()); }
     else if (confirm === 'load') { editor.useLatest(false); setConfirm(null); }

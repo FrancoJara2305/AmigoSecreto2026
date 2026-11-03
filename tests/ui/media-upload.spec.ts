@@ -10,7 +10,9 @@ test('file stays pending until save; preview, MIME, scoped path and successful a
   await expect(page.getByAltText('Vista previa del regalo')).toBeVisible();
   expect(state.uploads).toEqual(['image/png']); expect(state.gifts).toHaveLength(0);
   await page.getByRole('button',{name:'Guardar regalo',exact:true}).click();
-  await expect(page.getByText('Tu opción quedó guardada. Las demás ideas se mantienen.')).toBeVisible();
+  await expect(page).toHaveURL(/\/participante\/melyza$/);
+  await page.getByRole('link',{name:'Editar regalo de la opción 1',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Tu opción 1',exact:true})).toBeVisible();
   expect(state.gifts[0].image_path).toMatch(new RegExp(`^${fixtureOwner}/gift/`)); expect(state.gifts[0].image_url).toBeNull();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.getByRole('heading',{name:'Tu opción 1',exact:true}).focus(); await page.evaluate(()=>window.scrollTo(0,0));
