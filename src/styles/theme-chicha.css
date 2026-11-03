@@ -1,0 +1,53 @@
+/* EXPERIMENTAL "Chicha Navideña" theme.
+   Every rule below is scoped to :root[data-theme="chicha"] (set from src/app/theme.ts), so without
+   that attribute this file changes nothing and the original styles apply untouched.
+   To remove the experiment: delete this file, src/app/theme.ts, ThemeToggle.tsx and their lines in main.tsx. */
+
+:root[data-theme="chicha"] {
+  --chicha-fuchsia: #b5176e;
+  --chicha-indigo: #4a2574;
+  --chicha-wine: #8f1d58;
+  --chicha-hot: #d90479;
+  --chicha-gold: #ffd100;
+  --chicha-lime: #d4ff00;
+  --chicha-ink: #1f1916;
+}
+:root[data-theme="chicha"] body { background: #faf6ee; }
+
+/* Hero: night "chicha" gradient, gold badge, poster-style title and lime button. */
+:root[data-theme="chicha"] .welcome-hero { background: linear-gradient(135deg, #a80054 0%, #6a055a 50%, #240b4c 100%); }
+:root[data-theme="chicha"] .welcome-hero .eyebrow,
+:root[data-theme="chicha"] .welcome-hero .eyebrow > span { color: var(--chicha-gold); }
+:root[data-theme="chicha"] .welcome-hero h1 { color: #fff; text-shadow: 2px 3px 0 #1a0526; }
+:root[data-theme="chicha"] .button--welcome { background: var(--chicha-lime); border-color: var(--chicha-lime); color: #1a2e05; font-weight: 700; border-radius: 9999px; }
+:root[data-theme="chicha"] .button--welcome:hover { background: #e3ff4d; border-color: #e3ff4d; }
+:root[data-theme="chicha"] .button--welcome:focus-visible { outline-color: var(--chicha-gold); }
+
+/* Divider between hero and section 01: a retablo-style flower. */
+:root[data-theme="chicha"] .catalogue-divider { color: var(--chicha-fuchsia); }
+:root[data-theme="chicha"] .catalogue-divider > span { height: 2px; background: linear-gradient(90deg, transparent, var(--chicha-fuchsia) 45%, var(--chicha-gold)); }
+:root[data-theme="chicha"] .catalogue-divider > span:last-child { background: linear-gradient(90deg, var(--chicha-gold), var(--chicha-fuchsia) 55%, transparent); }
+:root[data-theme="chicha"] .catalogue-divider svg { width: 24px; height: 24px; stroke-width: 1.6; fill: var(--chicha-gold); }
+
+/* Participant and gift cards: solid borders and a hard bottom shadow, alternating every three. */
+:root[data-theme="chicha"] .participants-grid > li:nth-child(3n+1) .participant-card,
+:root[data-theme="chicha"] .wishlist-grid > .gift-card:nth-child(3n+1) { --chicha-edge: var(--chicha-fuchsia); }
+:root[data-theme="chicha"] .participants-grid > li:nth-child(3n+2) .participant-card,
+:root[data-theme="chicha"] .wishlist-grid > .gift-card:nth-child(3n+2) { --chicha-edge: var(--chicha-indigo); }
+:root[data-theme="chicha"] .participants-grid > li:nth-child(3n+3) .participant-card,
+:root[data-theme="chicha"] .wishlist-grid > .gift-card:nth-child(3n+3) { --chicha-edge: var(--chicha-wine); }
+:root[data-theme="chicha"] .participant-card,
+:root[data-theme="chicha"] .gift-card { border: 2px solid var(--chicha-edge); border-radius: 16px; box-shadow: 0 3px 0 var(--chicha-edge); transition: transform var(--duration-smooth) var(--ease-soft), box-shadow var(--duration-smooth) var(--ease-soft); }
+/* Cards keep the original beige: the name's cream backing must match it. */
+:root[data-theme="chicha"] :is(.participant-card__corner, .gift-card__option > span:last-child) { color: var(--chicha-fuchsia); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :root[data-theme="chicha"] :is(.participant-card, .gift-card):hover { transform: translateY(-3px); box-shadow: 4px 4px 0 var(--chicha-hot); }
+}
+
+/* Closing phrase before the footer. */
+:root[data-theme="chicha"] .catalogue-closing p { font-weight: 600; font-size: 1.4rem; color: var(--chicha-ink); }
+
+/* Temporary toggle (shown in both themes while SHOW_THEME_TOGGLE is true). Bottom-left, away from the assistant. */
+.theme-toggle { position: fixed; z-index: 70; left: max(1rem, env(safe-area-inset-left)); bottom: max(1rem, env(safe-area-inset-bottom)); display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; padding: .45rem .85rem; border: 1px solid var(--border-soft); border-radius: 999px; background: var(--surface-raised); color: var(--ink); font: 600 .72rem/1 var(--font-sans); box-shadow: 0 6px 18px #173e321f; cursor: pointer; }
+.theme-toggle svg { width: 16px; height: 16px; }
+.theme-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

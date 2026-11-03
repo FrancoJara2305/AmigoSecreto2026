@@ -184,8 +184,9 @@ test('catalogue photo cards swap the name for a full-card photo on hover, focus 
   await expect(cards.nth(1).locator('.participant-card__avatar')).toHaveCount(1);await expect(cards.nth(1).locator('.participant-card__photo')).toHaveCount(0);
   const reveal=async()=>{
     await expect(photo).toHaveCSS('opacity','1');await expect(name).toHaveCSS('opacity','0');
-    const box=(await photo.boundingBox())!,card=(await alice.boundingBox())!;
-    expect(Math.abs(box.width-card.width)).toBeLessThanOrEqual(2);expect(Math.abs(box.height-card.height)).toBeLessThanOrEqual(2);
+    // The photo covers the card inside its border, whatever the theme's border width.
+    const box=(await photo.boundingBox())!,card=await alice.evaluate((element)=>({width:element.clientWidth,height:element.clientHeight}));
+    expect(Math.abs(box.width-card.width)).toBeLessThanOrEqual(1);expect(Math.abs(box.height-card.height)).toBeLessThanOrEqual(1);
     expect(await photo.locator('img').evaluate((element)=>getComputedStyle(element).objectFit)).toBe('cover');
     await expect(alice.getByText('0 de 3 fijas')).toHaveCSS('color','rgb(255, 250, 242)');
   };
