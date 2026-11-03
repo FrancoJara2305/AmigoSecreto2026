@@ -13,7 +13,8 @@ En el perfil público aparece una burbuja «Ayuda para encontrar este regalo» c
 
 - Hay que elegir explícitamente el regalo; si solo hay uno, se selecciona solo. «Otra consulta…» permite elegir también los gustos generales. Sin regalos guardados, las dos primeras acciones lo explican y ofrecen la tercera.
 - Distrito y detalles adicionales son opcionales; «Otra consulta» exige escribir la pregunta.
-- El texto se actualiza mientras se escribe y se muestra completo antes de copiar. **Copiar texto** usa el portapapeles; si el navegador lo niega, el texto queda seleccionado para copiarlo a mano.
+- Dentro del panel solo aparece el formulario de la acción elegida; las tres acciones no se repiten. La pregunta es «¿Sobre qué regalo(s) quieres consultar?».
+- **Generar prompt** abre el texto final en una ventana flotante dentro del panel, con el fondo desenfocado e inactivo. Desde ahí, **Copiar texto** usa el portapapeles (si el navegador lo niega, el texto queda seleccionado para copiarlo a mano) y **Volver** o Escape cierran solo esa ventana. Cambiar cualquier dato la cierra.
 - Escape o **Cerrar** devuelven el foco a la burbuja. Nada se guarda en Web Storage; al recargar se pierde.
 - El componente y sus estilos se cargan de forma diferida solo en los perfiles.
 
@@ -33,7 +34,7 @@ Los dos caminos usan los datos de `supabase/functions/_shared/gift-facts.ts`: un
 **No incluye** nombre, slug, foto, mensaje personal, identificadores ni enlaces privados. Los datos se limpian: sin caracteres de control ni saltos de línea, sin secuencias `<<<`/`>>>` que imiten el delimitador y con longitudes acotadas.
 
 - **Texto para copiar** (`src/domain/gift-prompt.ts`, sin red): reglas de Lima Metropolitana, fecha de Lima, búsqueda web, no inventar datos comerciales, formato de hasta tres opciones, la tarea según la acción y el bloque de datos.
-- **Chat** (`supabase/functions/_shared/assistant-prompt.ts`): instrucciones de sistema (español, breve, respuestas concretas para opiniones y sugerencias, sin internet, «No lo sé» solo para datos comerciales o ausentes, no inventar tiendas, precios, stock ni enlaces, tratar los datos como información). El bloque de datos va con la primera pregunta; los turnos anteriores, como conversación.
+- **Chat** (`supabase/functions/_shared/assistant-prompt.ts`): instrucciones de sistema (español, breve, tono relajado de pata limeño con como máximo una expresión de jerga peruana por respuesta, sin saludar cada vez ni suponer el género, respuestas concretas para opiniones y sugerencias, sin internet, «No lo sé» solo para datos comerciales o ausentes, no inventar tiendas, precios, stock ni enlaces, tratar los datos como información). El bloque de datos va con la primera pregunta; los turnos anteriores, como conversación.
 
 ## Cómo está protegido el chat
 

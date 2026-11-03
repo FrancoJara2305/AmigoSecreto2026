@@ -26,7 +26,9 @@ async function clipboard(page:Page,works=true) {
 }
 const launcher=(page:Page)=>page.getByRole('button',{name:'Ayuda para encontrar este regalo'});
 const panel=(page:Page)=>page.getByRole('dialog',{name:'Prepara tu consulta'});
-const output=(page:Page)=>panel(page).getByLabel('Texto para tu asistente de IA');
+const promptWindow=(page:Page)=>panel(page).getByRole('dialog',{name:'Tu prompt está listo'});
+const output=(page:Page)=>promptWindow(page).getByLabel('Texto para tu asistente de IA');
+const generate=(page:Page)=>panel(page).getByRole('button',{name:'Generar prompt'});
 const axe=(page:Page)=>new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
 test.beforeEach(async({page})=>{
   await page.route('**/*',(route)=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort());
@@ -44,24 +46,37 @@ test('explicit gift choice builds a public-only prompt that is copied without an
   await expect(actions.getByRole('button').first()).toBeFocused();
   await actions.getByRole('button',{name:'Mostrar opciones similares para este regalo'}).click();
   // Two saved gifts: the person must choose; nothing is preselected.
-  const choice=panel(page).getByRole('group',{name:'¿Sobre qué quieres consultar?'});
+  const choice=panel(page).getByRole('group',{name:'¿Sobre qué regalo(s) quieres consultar?'});
   await expect(choice.getByRole('radio')).toHaveCount(2);
   await expect(choice.getByRole('radio',{checked:true})).toHaveCount(0);
+  // Only the chosen action's form: the three actions are not repeated inside the panel.
+  await expect(panel(page).getByRole('radio',{name:/Opciones similares|Tiendas físicas|Otra consulta/})).toHaveCount(0);
   await expect(output(page)).toHaveCount(0);
-  await expect(panel(page).getByRole('button',{name:'Copiar texto'})).toBeDisabled();
+  await expect(generate(page)).toBeDisabled();
   await choice.getByLabel('Opción 3 · Zapatillas cómodas').check();
   await expect(panel(page).getByText('Melyza · Opción 3 · Zapatillas cómodas',{exact:true})).toBeVisible();
   await panel(page).getByLabel('Distrito (opcional)').fill('Miraflores');
   await panel(page).getByLabel('Detalles adicionales (opcional)').fill('Hasta 250 soles');
+  await generate(page).click();
+  await expect(promptWindow(page).getByRole('button',{name:'Copiar texto'})).toBeFocused();
+  // The panel behind the floating window is blurred and inert.
+  expect(await panel(page).locator('.assistant-overlay').evaluate((element)=>getComputedStyle(element).backdropFilter)).toContain('blur');
+  expect(await panel(page).locator('.assistant-panel__body').evaluate((element)=>element.hasAttribute('inert'))).toBe(true);
   const text=await output(page).inputValue();
   expect(text).toContain('Ubicación: Miraflores, Lima Metropolitana, Perú.');
   expect(text).toContain('Detalle adicional: Hasta 250 soles');
   expect(text).toContain('Numeración: 42');
   expect(text).toContain('Enlace de referencia: https://shop.example.com/zapatillas');
   expect(text).not.toMatch(/Melyza|melyza|Un libro de relatos|tonos suaves|11111111|22222222/);
-  await panel(page).getByRole('radio',{name:'Tiendas físicas'}).check();
+  // Escape closes only the floating window and returns focus to "Generar prompt".
+  await page.keyboard.press('Escape');
+  await expect(promptWindow(page)).toHaveCount(0);await expect(generate(page)).toBeFocused();
+  await launcher(page).click();await launcher(page).click();
+  await page.getByRole('button',{name:'Mostrar tiendas físicas con este producto'}).click();
+  await panel(page).getByLabel('Opción 3 · Zapatillas cómodas').check();
+  await generate(page).click();
   await expect(output(page)).toHaveValue(/Busca tiendas físicas en Lima Metropolitana/);
-  await panel(page).getByRole('button',{name:'Copiar texto'}).click();
+  await promptWindow(page).getByRole('button',{name:'Copiar texto'}).click();
   await expect(page.getByText('Texto copiado',{exact:true})).toBeVisible();
   expect(await page.evaluate(()=>(window as Window&{copied?:string}).copied)).toBe(await output(page).inputValue());
   await page.emulateMedia({reducedMotion:'reduce'});
@@ -79,11 +94,12 @@ test('general preferences need a written question and clipboard denial selects t
   await panel(page).getByLabel('Gustos generales de esta persona').check();
   await expect(panel(page).getByText('Melyza · Gustos generales',{exact:true})).toBeVisible();
   await expect(panel(page).getByText('Escribe tu consulta para preparar el texto.')).toBeVisible();
-  await expect(panel(page).getByRole('button',{name:'Copiar texto'})).toBeDisabled();
+  await expect(generate(page)).toBeDisabled();
   await panel(page).getByLabel('Tu consulta').fill('¿Qué regalo pequeño le gustaría?');
+  await generate(page).click();
   await expect(output(page)).toHaveValue(/Gustos publicados: Me gustan los tonos suaves\.\nDATOS>>>$/);
-  await panel(page).getByRole('button',{name:'Copiar texto'}).click();
-  await expect(panel(page).getByText('Puedes copiarlo desde aquí')).toBeVisible();
+  await promptWindow(page).getByRole('button',{name:'Copiar texto'}).click();
+  await expect(promptWindow(page).getByText('Puedes copiarlo desde aquí')).toBeVisible();
   await expect(output(page)).toBeFocused();
   expect(await page.evaluate(()=>{const field=document.activeElement as HTMLTextAreaElement;return field.selectionEnd-field.selectionStart===field.value.length;})).toBe(true);
 });
@@ -115,7 +131,10 @@ test('a single saved gift is selected automatically and the panel fits narrow sc
   await expect.poll(async()=>(await launcher(page).boundingBox())!.y+(await launcher(page).boundingBox())!.height<=(await toast.boundingBox())!.y).toBe(true);
   await launcher(page).click();await page.getByRole('button',{name:'Mostrar opciones similares para este regalo'}).click();
   await expect(panel(page).getByLabel('Opción 3 · Zapatillas cómodas')).toBeChecked();
+  await generate(page).click();
   await expect(output(page)).toHaveValue(/Producto: Zapatillas cómodas/);
+  const card=(await promptWindow(page).boundingBox())!;
+  expect(card.x).toBeGreaterThanOrEqual(0);expect(card.x+card.width).toBeLessThanOrEqual(320);
   const box=(await panel(page).boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(320);expect(box.y).toBeGreaterThanOrEqual(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

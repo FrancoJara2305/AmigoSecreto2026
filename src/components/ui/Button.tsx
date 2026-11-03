@@ -1,9 +1,10 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { LoaderCircle } from 'lucide-react';
 
 type Variant = 'primary' | 'secondary' | 'quiet' | 'danger';
 interface VisualProps { variant?: Variant; icon?: ReactNode; className?: string; }
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VisualProps { loading?: boolean; }
+// React 19 passes ref as a regular prop; it reaches the <button> through the props spread.
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VisualProps { loading?: boolean; ref?: Ref<HTMLButtonElement>; }
 export function Button({ variant = 'primary', icon, loading = false, disabled, className = '', children, type = 'button', ...props }: ButtonProps) {
   return <button {...props} type={type} disabled={disabled || loading} aria-busy={loading || undefined}
     className={`button button--${variant} ${className}`}>
